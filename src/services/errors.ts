@@ -5,6 +5,7 @@ export type ServiceErrorCode =
   | "not_found"
   | "not_cancellable"
   | "invalid_input"
+  | "conflict"
   | "network";
 
 /**

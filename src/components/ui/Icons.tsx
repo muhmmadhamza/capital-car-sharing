@@ -217,3 +217,41 @@ export const CameraIcon = (p: IconProps) => (
     <circle cx="12" cy="12.8" r="3.2" />
   </Base>
 );
+
+export const PlusIcon = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M12 5v14M5 12h14" />
+  </Base>
+);
+
+export const EditIcon = (p: IconProps) => (
+  <Base {...p}>
+    <path d="m4 20 1-4.2L16.6 4.2a2 2 0 0 1 2.8 0l.4.4a2 2 0 0 1 0 2.8L8.2 19 4 20Z" />
+    <path d="m14.5 6.3 3.2 3.2" />
+  </Base>
+);
+
+export const TrashIcon = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M4 7h16M9.5 7V4.5h5V7M6.5 7l.8 12a1.5 1.5 0 0 0 1.5 1.4h6.4a1.5 1.5 0 0 0 1.5-1.4L17.5 7" />
+    <path d="M10 11v6M14 11v6" />
+  </Base>
+);
+
+export const ImageIcon = (p: IconProps) => (
+  <Base {...p}>
+    <rect x="3.5" y="4.5" width="17" height="15" rx="2.5" />
+    <circle cx="9" cy="10" r="1.6" />
+    <path d="m4 17 5-4.5 3.5 3L15.5 13 20 17.5" />
+  </Base>
+);
+
+export const CarIcon = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M5 16.5V13l1.7-4.6A2 2 0 0 1 8.6 7h6.8a2 2 0 0 1 1.9 1.4L19 13v3.5" />
+    <path d="M3.5 13h17v3.5a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1V13Z" />
+    <path d="M6.5 17.5V19M17.5 17.5V19" />
+    <circle cx="7.8" cy="14.9" r=".6" fill="currentColor" />
+    <circle cx="16.2" cy="14.9" r=".6" fill="currentColor" />
+  </Base>
+);

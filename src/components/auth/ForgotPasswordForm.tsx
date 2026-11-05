@@ -3,25 +3,36 @@
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/Button";
-import { CheckIcon } from "@/components/ui/Icons";
-import { FormField } from "@/components/ui/FormField";
+import { FormAlert, FormField } from "@/components/ui/FormField";
 import { validateEmail } from "@/features/auth/validation";
+import { customerPasswordReset } from "@/services/auth/password-reset.service";
+import { errorMessage } from "@/services/errors";
 import { AuthCard } from "./AuthCard";
 
-/**
- * Mock: nothing is sent. The API will email a single-use reset link and always
- * show this same message, so the form never reveals which emails have accounts.
- */
+/** Customer forgot-password. The API answers the same way whether or not the email has an account. */
 export function ForgotPasswordForm() {
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string>();
-  const [sent, setSent] = useState(false);
+  const [formError, setFormError] = useState<string>();
+  const [message, setMessage] = useState<string>();
+  const [submitting, setSubmitting] = useState(false);
 
-  function onSubmit(e: FormEvent) {
+  async function onSubmit(e: FormEvent) {
     e.preventDefault();
+    if (submitting) return;
     const found = validateEmail(email);
     setError(found);
-    if (!found) setSent(true);
+    setFormError(undefined);
+    if (found) return;
+
+    setSubmitting(true);
+    try {
+      setMessage(await customerPasswordReset.request(email));
+    } catch (err) {
+      setFormError(errorMessage(err));
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -34,13 +45,13 @@ export function ForgotPasswordForm() {
         </Link>
       }
     >
-      {sent ? (
-        <p role="status" className="flex items-start gap-2 rounded-lg border border-[#1E6B45]/25 bg-[#E7F4EC] px-4 py-3 text-sm text-[#14543A]">
-          <CheckIcon width={18} height={18} className="mt-0.5 shrink-0" />
-          If an account exists for {email.trim()}, a reset link is on its way. Password reset emails will be live once the backend is connected.
+      {message ? (
+        <p role="status" className="rounded-lg border border-gold-700/30 bg-gold-500/15 px-4 py-3 text-sm text-navy-900">
+          {message} The link is valid for a limited time and can be used once.
         </p>
       ) : (
         <form onSubmit={onSubmit} noValidate className="space-y-4">
+          {formError ? <FormAlert>{formError}</FormAlert> : null}
           <FormField
             label="Email"
             type="email"
@@ -53,8 +64,8 @@ export function ForgotPasswordForm() {
               setError(undefined);
             }}
           />
-          <Button type="submit" size="lg" className="w-full">
-            Send reset link
+          <Button type="submit" size="lg" className="w-full" disabled={submitting}>
+            {submitting ? "Sending…" : "Send reset link"}
           </Button>
         </form>
       )}

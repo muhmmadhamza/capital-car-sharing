@@ -13,7 +13,7 @@ type Shape = {
 const WHEELS = [150, 490] as const;
 const WHEEL_Y = 158;
 
-const SHAPES: Record<CarBodyType, Shape> = {
+const BASE_SHAPES: Record<"sedan" | "suv" | "hatch" | "coupe", Shape> = {
   sedan: {
     body: "M30 158 L30 130 Q30 118 46 114 L122 106 Q154 60 214 50 L398 50 Q458 52 498 94 L574 104 Q608 110 612 134 L612 158 L524 158 A34 34 0 0 0 456 158 L184 158 A34 34 0 0 0 116 158 Z",
     windows: [
@@ -54,6 +54,15 @@ const SHAPES: Record<CarBodyType, Shape> = {
     front: [596, 122],
     rear: [30, 124],
   },
+};
+
+/** Body types without their own drawing reuse the closest silhouette. */
+const SHAPES: Record<CarBodyType, Shape> = {
+  ...BASE_SHAPES,
+  luxury: BASE_SHAPES.sedan,
+  van: BASE_SHAPES.suv,
+  convertible: BASE_SHAPES.coupe,
+  pickup: BASE_SHAPES.suv,
 };
 
 type Props = {

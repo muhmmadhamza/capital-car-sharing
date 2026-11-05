@@ -1,12 +1,7 @@
-import { httpPartnerDataRepository } from "./http-repository";
-import { mockPartnerDataRepository } from "./mock-repository";
+import { apiPartnerDataRepository } from "./api-repository";
 import type { PartnerDataRepository } from "./repository";
 
-/**
- * The single entry point screens use for partner data. "mock" (default) or
- * "api" via NEXT_PUBLIC_PARTNER_DATA_SOURCE.
- */
-export const partnerData: PartnerDataRepository =
-  process.env.NEXT_PUBLIC_PARTNER_DATA_SOURCE === "api" ? httpPartnerDataRepository : mockPartnerDataRepository;
+/** The single entry point screens use for partner data, backed by the real API. */
+export const partnerData: PartnerDataRepository = apiPartnerDataRepository;
 
 export type { PartnerDataRepository } from "./repository";

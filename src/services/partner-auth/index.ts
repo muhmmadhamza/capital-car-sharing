@@ -1,9 +1,7 @@
-import { httpPartnerAuthRepository } from "./http-repository";
-import { mockPartnerAuthRepository } from "./mock-repository";
+import { apiPartnerAuthRepository } from "./api-repository";
 import type { PartnerAuthRepository } from "./repository";
 
-/** "mock" (default) or "api". Must be a NEXT_PUBLIC_ variable because it runs in the browser. */
-export const partnerAuthService: PartnerAuthRepository =
-  process.env.NEXT_PUBLIC_PARTNER_DATA_SOURCE === "api" ? httpPartnerAuthRepository : mockPartnerAuthRepository;
+/** Partner authentication, backed by the real API (NEXT_PUBLIC_API_URL). */
+export const partnerAuthService: PartnerAuthRepository = apiPartnerAuthRepository;
 
 export type { PartnerAuthRepository } from "./repository";

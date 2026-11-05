@@ -43,7 +43,9 @@ export function PartnerDashboardView() {
                 ? "Add your first car and start earning when it is parked."
                 : s.bookedCars
                   ? `${s.bookedCars} of your ${s.totalCars === 1 ? "car is" : "cars are"} out on a rental right now.`
-                  : `You have ${s.upcomingReservations} upcoming ${s.upcomingReservations === 1 ? "reservation" : "reservations"}.`}
+                  : s.upcomingReservations !== null
+                    ? `You have ${s.upcomingReservations} upcoming ${s.upcomingReservations === 1 ? "reservation" : "reservations"}.`
+                    : `You have ${s.totalCars} ${s.totalCars === 1 ? "car" : "cars"} listed.`}
           </p>
           <div className="mt-5 flex flex-col gap-3 sm:flex-row">
             <Button href="/partner/cars/new">

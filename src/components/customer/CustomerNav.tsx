@@ -5,13 +5,14 @@ import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Avatar } from "@/components/ui/Avatar";
-import { DashboardIcon, ListIcon, LogoutIcon, UserIcon } from "@/components/ui/Icons";
+import { DashboardIcon, ListIcon, LogoutIcon, ShieldIcon, UserIcon } from "@/components/ui/Icons";
 import { formatIsoDate } from "@/lib/date";
 import { cn } from "@/lib/utils";
 
 const items = [
   { label: "Dashboard", href: "/customer/dashboard", icon: DashboardIcon },
   { label: "My Reservations", href: "/customer/reservations", icon: ListIcon },
+  { label: "Verification", href: "/customer/verification", icon: ShieldIcon },
   { label: "Profile", href: "/customer/profile", icon: UserIcon },
 ] as const;
 

@@ -94,7 +94,7 @@ export function SettingsView() {
 
   return (
     <>
-      <PageHeader title="Settings" description="Platform details and rental defaults. Changes are saved in this browser for the demo." />
+      <PageHeader title="Settings" description="Platform details and rental defaults." />
 
       <form onSubmit={onSubmit} noValidate className="space-y-6">
         {formError ? <FormAlert>{formError}</FormAlert> : null}

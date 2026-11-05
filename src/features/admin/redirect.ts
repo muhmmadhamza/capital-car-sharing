@@ -8,7 +8,7 @@ export const ADMIN_FORGOT_PATH = "/admin/forgot-password";
 export function safeAdminNext(value: string | null | undefined): string {
   const next = safeNext(value, ADMIN_HOME);
   const insideAdmin = next === ADMIN_HOME || next.startsWith("/admin/") || next.startsWith("/admin?");
-  const isAuthPage = next === ADMIN_LOGIN_PATH || next.startsWith("/admin/login") || next.startsWith(ADMIN_FORGOT_PATH);
+  const isAuthPage = next === ADMIN_LOGIN_PATH || next.startsWith("/admin/login") || next.startsWith(ADMIN_FORGOT_PATH) || next.startsWith("/admin/reset-password");
   return insideAdmin && !isAuthPage ? next : ADMIN_HOME;
 }
 

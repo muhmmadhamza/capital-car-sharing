@@ -17,7 +17,7 @@ export type SettingsErrors = Partial<Record<SettingsField, string>>;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const wholeNumber = (v: number) => Number.isInteger(v);
 
-/** Shared by the form (instant feedback) and the mock service. The API must validate again. */
+/** Used by the form for instant feedback. The API must validate again. */
 export function validateSettings(s: AdminSettings): SettingsErrors {
   const errors: SettingsErrors = {};
   if (s.platformName.trim().length < 2) errors.platformName = "Enter the platform name.";

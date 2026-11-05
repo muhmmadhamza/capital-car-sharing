@@ -1,21 +1,16 @@
 import type { Partner, PartnerLoginInput, PartnerProfileUpdate, PartnerRegisterInput } from "@/types/partner";
 
 /**
- * Data-access contract for PARTNER authentication. It is deliberately separate
- * from src/services/auth (customers): different accounts, different session,
- * different endpoints. Swapping the mock for the Node.js + PostgreSQL API is
- * one new repository, not a UI rewrite.
+ * Data-access contract for PARTNER authentication. It is separate from
+ * src/services/auth (customers): a customer or admin session is never treated
+ * as a partner session. The implementation (./api-repository.ts) uses:
+ *   POST /auth/register (role "partner")   POST /auth/login   POST /auth/logout
+ *   GET  /partners/me                      PUT  /partners/me
  *
- * Planned API, all under /api/v1, session in an httpOnly cookie:
- *   POST  /partner/auth/register   { name, companyName?, email, phone, password, address } -> Partner  (409 email_taken)
- *   POST  /partner/auth/login      { email, password, remember }                           -> Partner  (401 invalid_credentials)
- *   POST  /partner/auth/logout                                                             -> 204
- *   GET   /partners/me                                                                     -> Partner | 401
- *   PATCH /partners/me             { name, companyName, email, phone, address, avatar? }   -> Partner  (409 email_taken)
- *   POST  /partners/me/avatar      multipart image                                         -> { url }
- *
- * Passwords are hashed in PostgreSQL. The API must reject a customer session on
- * every /partner route and the other way round.
+ * Not offered by the backend yet (these report "unavailable", never a fake success):
+ *   - uploading a profile photo
+ *   - changing the email address
+ *   - password reset by email
  */
 export interface PartnerAuthRepository {
   getSession(): Promise<Partner | null>;

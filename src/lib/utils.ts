@@ -12,3 +12,6 @@ export function formatPrice(amount: number): string {
     maximumFractionDigits: 0,
   }).format(amount);
 }
+
+/** "Gulberg, Lahore" — skips the parts the API did not give us. */
+export const formatLocation = (l: { name: string; city?: string }) => [l.name, l.city].filter(Boolean).join(", ");

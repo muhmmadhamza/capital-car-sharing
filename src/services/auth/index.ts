@@ -1,11 +1,7 @@
-import { httpAuthRepository } from "./http-repository";
-import { mockAuthRepository } from "./mock-repository";
+import { apiAuthRepository } from "./api-repository";
 import type { AuthRepository } from "./repository";
 
-/**
- * "mock" (default) or "api". Customer screens run in the browser, so this must
- * be a NEXT_PUBLIC_ variable. Flip it once the backend is live.
- */
-export const authService: AuthRepository = process.env.NEXT_PUBLIC_CUSTOMER_DATA_SOURCE === "api" ? httpAuthRepository : mockAuthRepository;
+/** Customer authentication, backed by the real API (NEXT_PUBLIC_API_URL). */
+export const authService: AuthRepository = apiAuthRepository;
 
 export type { AuthRepository } from "./repository";

@@ -9,7 +9,7 @@ import { ReservePanel } from "@/components/cars/ReservePanel";
 import { Container } from "@/components/ui/Container";
 import { BagIcon, CheckIcon, FuelIcon, GearIcon, PinIcon, SeatIcon } from "@/components/ui/Icons";
 import { parseSearchParams } from "@/features/cars/search-params";
-import { formatPrice } from "@/lib/utils";
+import { formatLocation, formatPrice } from "@/lib/utils";
 import { getCarDetail } from "@/services/cars";
 
 export const dynamic = "force-dynamic";
@@ -21,7 +21,9 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const car = await getCarDetail(slug);
+  // Metadata must never take the page down: if the API is unreachable the page itself shows the error.
+  const car = await getCarDetail(slug).catch(() => undefined);
+  if (car === undefined) return { title: "Car" };
   if (!car) return { title: "Car not found" };
   return {
     title: `${car.make} ${car.model} ${car.year}`,
@@ -51,7 +53,7 @@ export default async function CarDetailPage({ params, searchParams }: Props) {
     ["Doors", String(car.doors)],
     ["Transmission", car.transmission],
     ["Fuel type", car.fuel],
-    ["Luggage", `${car.luggage} large ${car.luggage === 1 ? "bag" : "bags"}`],
+    ...(car.luggage !== undefined ? ([["Luggage", `${car.luggage} large ${car.luggage === 1 ? "bag" : "bags"}`]] as [string, string][]) : []),
     ["Pickup point", car.location.name],
   ];
 
@@ -89,7 +91,7 @@ export default async function CarDetailPage({ params, searchParams }: Props) {
               </h1>
               <p className="mt-3 inline-flex items-center gap-1.5 text-sm text-navy-100">
                 <PinIcon width={16} height={16} className="text-gold-400" />
-                {car.location.name}, {car.location.city}
+                {formatLocation(car.location)}
               </p>
             </div>
             <AvailabilityBadge availability={car.availability} hasWindow={Boolean(query.window)} className="self-start sm:self-auto" />
@@ -106,10 +108,10 @@ export default async function CarDetailPage({ params, searchParams }: Props) {
               <li className="inline-flex items-center gap-2"><SeatIcon className="text-gold-700" /> {car.seats} seats</li>
               <li className="inline-flex items-center gap-2"><GearIcon className="text-gold-700" /> {car.transmission}</li>
               <li className="inline-flex items-center gap-2"><FuelIcon className="text-gold-700" /> {car.fuel}</li>
-              <li className="inline-flex items-center gap-2"><BagIcon className="text-gold-700" /> {car.luggage} bags</li>
+              {car.luggage !== undefined ? <li className="inline-flex items-center gap-2"><BagIcon className="text-gold-700" /> {car.luggage} bags</li> : null}
             </ul>
 
-            <p className="max-w-prose text-lg leading-relaxed text-navy-700">{car.description}</p>
+            {car.description ? <p className="max-w-prose text-lg leading-relaxed text-navy-700">{car.description}</p> : null}
 
             <Section title="Specifications">
               <dl className="grid gap-x-8 sm:grid-cols-2">
@@ -122,6 +124,7 @@ export default async function CarDetailPage({ params, searchParams }: Props) {
               </dl>
             </Section>
 
+            {car.features.length > 0 ? (
             <Section title="Features">
               <ul className="grid gap-x-8 gap-y-3 sm:grid-cols-2">
                 {car.features.map((feature) => (
@@ -132,6 +135,7 @@ export default async function CarDetailPage({ params, searchParams }: Props) {
                 ))}
               </ul>
             </Section>
+            ) : null}
 
             <Section title="Pricing">
               <dl className="grid gap-4 sm:grid-cols-3">
@@ -139,14 +143,18 @@ export default async function CarDetailPage({ params, searchParams }: Props) {
                   <dt className="text-sm text-muted">Daily rate</dt>
                   <dd className="mt-1 font-display text-2xl font-semibold text-navy-900">{formatPrice(car.pricePerDay)}</dd>
                 </div>
-                <div className="rounded-xl border border-navy-900/10 p-4">
-                  <dt className="text-sm text-muted">Refundable deposit</dt>
-                  <dd className="mt-1 font-display text-2xl font-semibold text-navy-900">{formatPrice(car.depositAmount)}</dd>
-                </div>
-                <div className="rounded-xl border border-navy-900/10 p-4">
-                  <dt className="text-sm text-muted">Included mileage</dt>
-                  <dd className="mt-1 font-display text-2xl font-semibold text-navy-900">{car.mileagePerDay} km/day</dd>
-                </div>
+                {car.depositAmount !== undefined ? (
+                  <div className="rounded-xl border border-navy-900/10 p-4">
+                    <dt className="text-sm text-muted">Refundable deposit</dt>
+                    <dd className="mt-1 font-display text-2xl font-semibold text-navy-900">{formatPrice(car.depositAmount)}</dd>
+                  </div>
+                ) : null}
+                {car.mileagePerDay !== undefined ? (
+                  <div className="rounded-xl border border-navy-900/10 p-4">
+                    <dt className="text-sm text-muted">Included mileage</dt>
+                    <dd className="mt-1 font-display text-2xl font-semibold text-navy-900">{car.mileagePerDay} km/day</dd>
+                  </div>
+                ) : null}
               </dl>
               <p className="mt-4 text-sm text-muted">
                 Each started 24 hours counts as one day. Taxes and any extras are confirmed at checkout.

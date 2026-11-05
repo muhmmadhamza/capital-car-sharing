@@ -10,7 +10,7 @@ import { CalendarIcon, ChevronLeftIcon, PinIcon } from "@/components/ui/Icons";
 import { canCancel } from "@/features/reservations/status";
 import { useReservation } from "@/hooks/useReservations";
 import { formatDate, formatIsoDate, formatTime } from "@/lib/date";
-import { cn, formatPrice } from "@/lib/utils";
+import { cn, formatLocation, formatPrice } from "@/lib/utils";
 import { cancelReservation } from "@/services/reservations";
 import { errorMessage } from "@/services/errors";
 import { StatusBadge } from "./StatusBadge";
@@ -121,7 +121,7 @@ export function ReservationDetails({ id }: { id: string }) {
                   ["Seats", r.car.seats],
                   ["Transmission", r.car.transmission],
                   ["Fuel", r.car.fuel],
-                  ["Mileage", `${r.car.mileagePerDay} km/day`],
+                  ...(r.car.mileagePerDay !== undefined ? [["Mileage", `${r.car.mileagePerDay} km/day`]] : []),
                 ].map(([label, value]) => (
                   <div key={label} className="py-2">
                     <dt className="text-xs font-medium text-muted">{label}</dt>
@@ -142,9 +142,9 @@ export function ReservationDetails({ id }: { id: string }) {
                 <span>
                   <span className="font-medium">{r.location.name}</span>
                   <br />
-                  <span className="text-muted">
-                    {r.location.address}, {r.location.city}
-                  </span>
+                  {r.location.address && r.location.address !== r.location.name ? (
+                    <span className="text-muted">{formatLocation({ name: r.location.address, city: r.location.city })}</span>
+                  ) : null}
                 </span>
               </p>
               <p className="mt-3 flex items-center gap-2 text-sm font-medium text-navy-900">
@@ -197,7 +197,7 @@ export function ReservationDetails({ id }: { id: string }) {
               </Row>
             </dl>
             <p className="mt-3 text-xs leading-relaxed text-muted">
-              A refundable security deposit of {formatPrice(r.car.depositAmount)} applies at pickup. Payments are not connected yet, so nothing has been charged.
+              {r.car.depositAmount !== undefined ? `A refundable security deposit of ${formatPrice(r.car.depositAmount)} applies at pickup. ` : ""}Payments are not connected yet, so nothing has been charged.
             </p>
           </Section>
 

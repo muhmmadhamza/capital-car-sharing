@@ -104,7 +104,8 @@ function Legend() {
 
 function Calendar({ car }: { car: PartnerCarView }) {
   const { partner } = usePartnerAuth();
-  const today = dateOf(nowWall());
+  // The server's "today" (business time zone) so the calendar and My Cars always agree; the browser clock is only a fallback.
+  const today = car.todayDate ?? dateOf(nowWall());
   const firstMonth: DateKey = `${today.slice(0, 7)}-01`;
   const lastMonth = addMonths(firstMonth, MONTHS_AHEAD);
 

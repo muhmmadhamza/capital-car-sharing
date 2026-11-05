@@ -3,7 +3,8 @@ import { listLocations } from "@/services/cars";
 
 /** Landing-page search. Submits to /cars, where results and availability are shown. */
 export async function SearchCard() {
-  const locations = await listLocations();
+  // Location suggestions are a convenience: if they cannot be loaded the search still works as free text.
+  const locations = await listLocations().catch(() => []);
 
   return (
     <section id="search" aria-label="Search cars" className="relative z-10 -mt-14 scroll-mt-24 sm:-mt-16">

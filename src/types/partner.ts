@@ -15,7 +15,7 @@ export interface Partner {
   email: string;
   phone: string;
   address: string;
-  /** Image URL (or data URL in mock mode). Empty or missing shows initials. */
+  /** Image URL. Empty or missing shows initials. */
   avatar?: string;
   /** ISO 8601 timestamp. */
   createdAt: string;
@@ -51,8 +51,9 @@ export interface PartnerProfileUpdate {
  * - booked:      out on a rental right now (derived from reservations, never set by hand)
  * - unavailable: the owner has paused the listing
  * - pending:     waiting for Capital Car Sharing to verify the car
+ * - rejected / suspended: the platform did not approve the car, or paused it
  */
-export type PartnerCarStatus = "available" | "booked" | "unavailable" | "pending";
+export type PartnerCarStatus = "available" | "booked" | "unavailable" | "pending" | "rejected" | "suspended";
 
 /** Matches the `partner_cars` table. */
 export interface PartnerCar {
@@ -87,8 +88,14 @@ export interface PartnerCarView extends PartnerCar {
   status: PartnerCarStatus;
   /** What is stored, without the derived "booked". Edit forms use this one. */
   listingStatus: PartnerCarStatus;
-  /** State of today's date on the car's calendar. */
-  today: CarDayStatus;
+  /**
+   * State of today's date on the car's calendar, read from the same availability data as the calendar.
+   * `undefined` means it could not be loaded: screens must say so, never fall back to "unavailable".
+   * Unrelated to `status`: a pending car can be available today and is still pending.
+   */
+  today?: CarDayStatus;
+  /** The date `today` refers to, as the server calculated it (business time zone). */
+  todayDate?: DateKey;
   /** Soonest upcoming or active reservation, when there is one. */
   nextReservationAt?: WallClock;
 }
@@ -138,7 +145,8 @@ export interface PartnerReservationView extends PartnerReservation {
 export interface PartnerStats {
   totalCars: number;
   availableCars: number;
-  bookedCars: number;
-  upcomingReservations: number;
-  totalReservations: number;
+  /** `null` while the backend cannot provide reservation figures. Screens show a dash, never a made-up number. */
+  bookedCars: number | null;
+  upcomingReservations: number | null;
+  totalReservations: number | null;
 }

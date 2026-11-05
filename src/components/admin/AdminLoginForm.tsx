@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/Button";
 import { FormAlert, FormField } from "@/components/ui/FormField";
-import { DEMO_ADMIN_CREDENTIALS } from "@/data/mock/admin/admins";
 import { ADMIN_FORGOT_PATH, safeAdminNext } from "@/features/admin/redirect";
 import { compact, hasErrors, validateEmail, type Errors } from "@/features/auth/validation";
 import { errorMessage } from "@/services/errors";
@@ -95,27 +94,6 @@ export function AdminLoginForm() {
         </Button>
       </form>
 
-      {/* Mock-only helper. Delete with the mock admin auth when the API goes live. */}
-      <div className="mt-6 rounded-xl border border-gold-700/30 bg-gold-500/10 p-4 text-sm text-navy-900">
-        <p className="font-semibold">Demo admin account</p>
-        <p className="mt-1 break-all text-navy-700">
-          {DEMO_ADMIN_CREDENTIALS.email}
-          <br />
-          {DEMO_ADMIN_CREDENTIALS.password}
-        </p>
-        <button
-          type="button"
-          onClick={() => {
-            setEmail(DEMO_ADMIN_CREDENTIALS.email);
-            setPassword(DEMO_ADMIN_CREDENTIALS.password);
-            setErrors({});
-            setFormError(undefined);
-          }}
-          className="mt-2 inline-flex h-9 items-center text-sm font-semibold text-navy-900 underline underline-offset-2 hover:text-gold-700"
-        >
-          Fill in demo details
-        </button>
-      </div>
     </AdminAuthLayout>
   );
 }

@@ -54,7 +54,7 @@ export function CarCard({ car, availability, hasWindow = false, detailsQuery }: 
             <FuelIcon width={17} height={17} className="text-gold-700" />
             {car.fuel}
           </li>
-          {availability ? (
+          {availability && car.luggage !== undefined ? (
             <li className="inline-flex items-center gap-1.5">
               <BagIcon width={17} height={17} className="text-gold-700" />
               {car.luggage} bags

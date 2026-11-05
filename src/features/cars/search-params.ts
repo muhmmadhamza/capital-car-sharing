@@ -6,7 +6,7 @@ import { combine, isDateKey, isTimeKey, nowWall } from "@/lib/date";
 export const DEFAULT_PICKUP_TIME = "10:00";
 
 export const BODY_TYPES = Object.keys(BODY_TYPE_LABELS) as CarBodyType[];
-export const FUEL_TYPES: FuelType[] = ["Petrol", "Diesel", "Hybrid", "Electric"];
+export const FUEL_TYPES: FuelType[] = ["Petrol", "Diesel", "Hybrid", "Electric", "CNG"];
 export const TRANSMISSIONS: Transmission[] = ["Automatic", "Manual"];
 export const SEAT_OPTIONS = [4, 5, 7] as const;
 /** Bounds used by the price filter hints. */

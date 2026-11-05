@@ -1,9 +1,9 @@
 import type { CarBodyType, FuelType, Transmission } from "@/types/car";
 import type { CarDayStatus, PartnerCarStatus } from "@/types/partner";
 
-export const CAR_TYPES: CarBodyType[] = ["sedan", "suv", "hatch", "coupe"];
+export const CAR_TYPES: CarBodyType[] = ["sedan", "suv", "hatch", "coupe", "luxury", "van", "convertible", "pickup"];
 export const TRANSMISSIONS: Transmission[] = ["Automatic", "Manual"];
-export const FUEL_TYPES: FuelType[] = ["Petrol", "Diesel", "Hybrid", "Electric"];
+export const FUEL_TYPES: FuelType[] = ["Petrol", "Diesel", "Hybrid", "Electric", "CNG"];
 
 /** Common features offered as one-tap choices. Partners can add their own too. */
 export const COMMON_FEATURES = [
@@ -24,6 +24,9 @@ export const COMMON_FEATURES = [
 ] as const;
 
 export const MAX_CAR_IMAGES = 6;
+/** Must match the API: JPG, PNG and WebP, UPLOAD_MAX_FILE_SIZE_MB (5 MB by default). The server re-checks both. */
+export const CAR_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
+export const MAX_CAR_IMAGE_MB = 5;
 export const MIN_CAR_YEAR = 1995;
 
 export const CAR_STATUS_LABELS: Record<PartnerCarStatus, string> = {
@@ -31,6 +34,8 @@ export const CAR_STATUS_LABELS: Record<PartnerCarStatus, string> = {
   booked: "Booked",
   unavailable: "Unavailable",
   pending: "Pending",
+  rejected: "Rejected",
+  suspended: "Suspended",
 };
 
 export const DAY_STATUS_LABELS: Record<CarDayStatus, string> = {

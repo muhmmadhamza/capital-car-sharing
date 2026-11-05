@@ -7,13 +7,12 @@ import { StatusBadge } from "@/components/customer/StatusBadge";
 import { EmptyBlock, ErrorBlock, LoadingBlock, panel } from "@/components/customer/States";
 import { Button } from "@/components/ui/Button";
 import { CalendarIcon, CheckIcon, ChevronLeftIcon, EditIcon, PinIcon, TrashIcon } from "@/components/ui/Icons";
-import { DAY_STATUS_LABELS } from "@/features/partners/catalog";
 import { usePartnerCar, usePartnerReservations } from "@/hooks/usePartnerData";
 import { formatDateTime, formatIsoDate } from "@/lib/date";
 import { cn, formatPrice } from "@/lib/utils";
 import { BODY_TYPE_LABELS } from "@/types/car";
 import { DeleteCarDialog } from "./DeleteCarDialog";
-import { CarStatusBadge, PartnerCarImage, carName } from "./parts";
+import { CarStatusBadge, PartnerCarImage, carName, todayLabel } from "./parts";
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -77,7 +76,7 @@ export function CarDetailsView({ id }: { id: string }) {
             <CarStatusBadge status={car.status} />
           </div>
           <p className="mt-1 text-sm text-muted">
-            Listed {formatIsoDate(car.createdAt)} · {DAY_STATUS_LABELS[car.today]} today
+            Listed {formatIsoDate(car.createdAt)} · {todayLabel(car)}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">

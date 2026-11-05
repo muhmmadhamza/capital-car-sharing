@@ -27,8 +27,8 @@ export function useAuth(): AuthState {
 
 /**
  * Single source of truth for "who is signed in". Components only see this
- * context; where the session really lives (mock storage now, an httpOnly
- * cookie checked by the Node.js API later) is hidden inside services/auth.
+ * context; where the session really lives (the token the API issued, checked
+ * by the Node.js API on every request) is hidden inside services/auth.
  */
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [customer, setCustomer] = useState<Customer | null>(null);

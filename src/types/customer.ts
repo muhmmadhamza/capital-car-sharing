@@ -7,7 +7,7 @@ export interface Customer {
   name: string;
   email: string;
   phone: string;
-  /** Image URL (or data URL in mock mode). Empty or missing shows initials. */
+  /** Image URL. Empty or missing shows initials. */
   avatar?: string;
   /** ISO 8601 timestamp, e.g. "2026-10-08T01:27:00.000Z". */
   createdAt: string;

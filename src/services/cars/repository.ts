@@ -3,28 +3,28 @@ import type { Car, Location } from "@/types/car";
 import type { CarFilters } from "@/types/search";
 
 /**
- * Data-access contract for cars and bookings. The UI never talks to mock data
- * directly; it goes through this interface, so moving to the real backend is
- * one new class, not a rewrite.
+ * Data-access contract for cars and availability. The UI never talks to the
+ * API client directly; it goes through this interface, so screens stay the
+ * same whatever the backend looks like.
  *
- * Planned API (Node.js + PostgreSQL), all under /api/v1:
- *   GET /cars?location=&type=&minPrice=&maxPrice=&minSeats=&transmission=&fuel=   -> Car[]
- *   GET /cars/:slug                                                              -> Car | 404
- *   GET /cars/blocks?carId=a&carId=b&from=YYYY-MM-DDTHH:mm                       -> BookingBlock[]
- *   GET /locations                                                               -> Location[]
- *   GET /cars?id=a&id=b                                                          -> Car[]   (getCarsByIds)
+ * Implemented by ./api-repository.ts on top of src/services/api/cars.service.ts:
+ *   GET /cars?location=&carType=&minPrice=&maxPrice=&transmission=&fuelType=&sort=&page=&limit=
+ *   GET /cars/:id
+ *   GET /cars/:id/availability?startDate=&endDate=
  *
  * Availability itself is computed in src/features/availability from the blocks,
- * and the reservation endpoint must run the same validateRental() check again,
- * backed by an exclusion constraint on (car_id, tsrange(start_at, end_at)).
+ * and the reservation endpoint must run the same validateRental() check again.
  */
 export interface CarsRepository {
+  /** Pickup places that currently have cars. */
   listLocations(): Promise<Location[]>;
-  /** Static attribute filtering only. `location` is a free-text query matched against branches. */
+  /** Cars matching the filters. `location` is a free-text query. */
   findCars(query: { location: string; filters: CarFilters }): Promise<Car[]>;
+  /** The newest cars, for the landing page. */
+  getFeaturedCars(limit: number): Promise<Car[]>;
   getCarBySlug(slug: string): Promise<Car | null>;
-  /** Several cars by id, for screens that show cars from another record (e.g. reservations). Unknown ids are skipped. */
+  /** Several cars by id, for screens that show cars from another record (e.g. reservations). Cars that are not public any more are skipped. */
   getCarsByIds(ids: string[]): Promise<Car[]>;
-  /** Blocks ending after `from` for the given cars. */
-  getBlocks(carIds: string[], from: string): Promise<BookingBlock[]>;
+  /** Blocks ending after `from`, up to `horizonDays` ahead, for the given cars. */
+  getBlocks(carIds: string[], from: string, horizonDays: number): Promise<BookingBlock[]>;
 }

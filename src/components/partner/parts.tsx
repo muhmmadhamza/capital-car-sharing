@@ -1,8 +1,8 @@
 import { CarImageView } from "@/components/cars/CarImageView";
-import { CAR_STATUS_LABELS } from "@/features/partners/catalog";
+import { CAR_STATUS_LABELS, DAY_STATUS_LABELS } from "@/features/partners/catalog";
 import { cn } from "@/lib/utils";
 import type { CarImage } from "@/types/car";
-import type { PartnerCar, PartnerCarStatus } from "@/types/partner";
+import type { PartnerCar, PartnerCarStatus, PartnerCarView } from "@/types/partner";
 
 /** Same pill shape and palette as the customer StatusBadge, so statuses look alike everywhere. */
 const styles: Record<PartnerCarStatus, string> = {
@@ -10,6 +10,8 @@ const styles: Record<PartnerCarStatus, string> = {
   booked: "border-navy-700/25 bg-navy-900/[0.06] text-navy-900",
   unavailable: "border-[#B3261E]/25 bg-[#FBEAE9] text-[#8E1D17]",
   pending: "border-gold-700/30 bg-gold-500/15 text-navy-900",
+  rejected: "border-[#B3261E]/25 bg-[#FBEAE9] text-[#8E1D17]",
+  suspended: "border-[#B3261E]/25 bg-[#FBEAE9] text-[#8E1D17]",
 };
 
 const dots: Record<PartnerCarStatus, string> = {
@@ -17,6 +19,8 @@ const dots: Record<PartnerCarStatus, string> = {
   booked: "bg-navy-700",
   unavailable: "bg-[#B3261E]",
   pending: "bg-gold-700",
+  rejected: "bg-[#B3261E]",
+  suspended: "bg-[#B3261E]",
 };
 
 export function CarStatusBadge({ status, className }: { status: PartnerCarStatus; className?: string }) {
@@ -59,13 +63,18 @@ export function PartnerCarImage({
   );
 }
 
-export function StatCard({ label, value, hint, tone, className }: { label: string; value: number | undefined; hint?: string; tone: string; className?: string }) {
+export function StatCard({ label, value, hint, tone, className }: { label: string; value: number | null | undefined; hint?: string; tone: string; className?: string }) {
   return (
     <div className={cn("relative overflow-hidden rounded-2xl border border-navy-900/10 bg-white p-5 shadow-card", className)}>
       <span aria-hidden="true" className={cn("absolute inset-x-0 top-0 h-1", tone)} />
       <p className="text-sm font-medium text-navy-700">{label}</p>
       {value === undefined ? (
         <div aria-hidden="true" className="mt-2 h-9 w-12 animate-pulse rounded-lg bg-navy-900/[0.07]" />
+      ) : value === null ? (
+        <p className="mt-1 font-display text-4xl font-semibold text-navy-900/40" title="Not available yet">
+          <span aria-hidden="true">—</span>
+          <span className="sr-only">Not available yet</span>
+        </p>
       ) : (
         <p className="mt-1 font-display text-4xl font-semibold text-navy-900">{value}</p>
       )}
@@ -76,3 +85,15 @@ export function StatCard({ label, value, hint, tone, className }: { label: strin
 
 /** "BMW 3 Series" */
 export const carName = (car: Pick<PartnerCar, "make" | "model">) => `${car.make} ${car.model}`;
+
+/** "Available today", "Unavailable today", "Booked today", or a plain notice when the calendar data is missing. */
+export function todayLabel(car: Pick<PartnerCarView, "today">): string {
+  return car.today ? `${DAY_STATUS_LABELS[car.today]} today` : "Availability could not be loaded";
+}
+
+export function todayTone(car: Pick<PartnerCarView, "today">): string {
+  if (car.today === "available") return "text-[#14543A]";
+  if (car.today === "booked") return "text-navy-900";
+  if (car.today === "unavailable") return "text-[#8E1D17]";
+  return "text-muted";
+}

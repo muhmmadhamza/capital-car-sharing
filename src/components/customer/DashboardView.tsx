@@ -9,6 +9,7 @@ import { summarize } from "@/features/reservations/status";
 import { useReservations } from "@/hooks/useReservations";
 import { cn } from "@/lib/utils";
 import { ReservationCard } from "./ReservationCard";
+import { VerificationBanner } from "./verification/VerificationBanner";
 import { EmptyBlock, ErrorBlock, LoadingBlock, Skeleton, panel } from "./States";
 
 function StatCard({ label, value, hint, tone }: { label: string; value: number | undefined; hint?: string; tone: string }) {
@@ -58,6 +59,8 @@ export function DashboardView() {
           </Button>
         </div>
       </section>
+
+      <VerificationBanner />
 
       <section aria-label="Reservation summary" className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard label="Total reservations" value={summary?.total} tone="bg-navy-900" />

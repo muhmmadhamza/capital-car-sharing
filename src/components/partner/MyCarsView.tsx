@@ -7,20 +7,18 @@ import { EmptyBlock, ErrorBlock, PageHeader, Skeleton, panel } from "@/component
 import { Button } from "@/components/ui/Button";
 import { SelectField } from "@/components/ui/FormControls";
 import { CalendarIcon, EditIcon, EyeIcon, PinIcon, PlusIcon, TrashIcon } from "@/components/ui/Icons";
-import { CAR_STATUS_LABELS, DAY_STATUS_LABELS } from "@/features/partners/catalog";
+import { CAR_STATUS_LABELS } from "@/features/partners/catalog";
 import { usePartnerCars } from "@/hooks/usePartnerData";
 import { BODY_TYPE_LABELS } from "@/types/car";
 import type { PartnerCarStatus, PartnerCarView } from "@/types/partner";
 import { cn, formatPrice } from "@/lib/utils";
 import { DeleteCarDialog } from "./DeleteCarDialog";
-import { CarStatusBadge, PartnerCarImage, carName } from "./parts";
+import { CarStatusBadge, PartnerCarImage, carName, todayLabel, todayTone } from "./parts";
 
 const action =
   "inline-flex h-10 items-center justify-center gap-1.5 rounded-lg border px-3 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold-500";
 
 function PartnerCarCard({ car, highlight, onDelete }: { car: PartnerCarView; highlight?: boolean; onDelete: (car: PartnerCarView) => void }) {
-  const todayTone =
-    car.today === "available" ? "text-[#14543A]" : car.today === "booked" ? "text-navy-900" : "text-[#8E1D17]";
   return (
     <article className={cn(panel, "flex flex-col overflow-hidden", highlight && "ring-2 ring-gold-500")}>
       <div className="relative aspect-[16/9] w-full">
@@ -49,7 +47,7 @@ function PartnerCarCard({ car, highlight, onDelete }: { car: PartnerCarView; hig
           </div>
           <div className="flex items-center justify-between gap-3 border-t border-navy-900/10 pt-2">
             <dt className="text-muted">Availability</dt>
-            <dd className={cn("font-semibold", todayTone)}>{DAY_STATUS_LABELS[car.today]} today</dd>
+            <dd className={cn("font-semibold", todayTone(car))}>{todayLabel(car)}</dd>
           </div>
           <div className="flex items-center justify-between gap-3">
             <dt className="text-muted">Current status</dt>

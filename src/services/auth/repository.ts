@@ -2,20 +2,18 @@ import type { Customer, LoginInput, ProfileUpdate, RegisterInput } from "@/types
 
 /**
  * Data-access contract for customer authentication. The UI only talks to
- * src/services/auth, so replacing the mock with the Node.js + PostgreSQL API
- * is one new repository, not a UI rewrite.
+ * src/services/auth; the implementation (./api-repository.ts) uses the API
+ * endpoints in src/services/api:
+ *   POST /auth/customer/register   POST /auth/customer/login   GET /auth/me   POST /auth/logout
+ *   PUT  /customers/me
  *
- * Planned API, all under /api/v1. The session lives in an httpOnly cookie set
- * by the server, so the browser never handles a token:
- *   POST  /auth/register         { name, email, phone, password }   -> Customer   (409 email_taken)
- *   POST  /auth/login            { email, password, remember }      -> Customer   (401 invalid_credentials)
- *   POST  /auth/logout                                              -> 204
- *   GET   /customers/me                                             -> Customer | 401
- *   PATCH /customers/me          { name, email, phone, avatar? }    -> Customer   (409 email_taken)
- *   POST  /customers/me/avatar   multipart image                    -> { url }
+ * The session is the token the API issues at login. A session that belongs to
+ * a partner or an admin is never treated as a customer session.
  *
- * Errors are `{ code, message, field? }` and become ServiceError (../errors).
- * Passwords are hashed (argon2 or bcrypt) in PostgreSQL; never stored or logged in clear text.
+ * Not offered by the backend yet (these report "unavailable", never a fake success):
+ *   - uploading a profile photo
+ *   - changing the email address
+ *   - password reset by email
  */
 export interface AuthRepository {
   /** The signed-in customer, or null when nobody is signed in. */

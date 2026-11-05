@@ -1,8 +1,6 @@
-import { httpAdminDashboard } from "./http";
-import { mockAdminDashboard } from "./mock/dashboard";
-import { isAdminApi } from "./source";
+import { apiAdminDashboard } from "./api-repository";
 import type { AdminDashboardRepository } from "./contracts";
 
-const repo: AdminDashboardRepository = isAdminApi ? httpAdminDashboard : mockAdminDashboard;
+const repo: AdminDashboardRepository = apiAdminDashboard;
 
 export const getDashboard: AdminDashboardRepository["getDashboard"] = () => repo.getDashboard();

@@ -1,9 +1,7 @@
-import { httpAdminCars } from "./http";
-import { mockAdminCars } from "./mock/cars";
-import { isAdminApi } from "./source";
+import { apiAdminCars } from "./api-repository";
 import type { AdminCarRepository } from "./contracts";
 
-const repo: AdminCarRepository = isAdminApi ? httpAdminCars : mockAdminCars;
+const repo: AdminCarRepository = apiAdminCars;
 
 export const getCars: AdminCarRepository["getCars"] = () => repo.getCars();
 export const getCarById: AdminCarRepository["getCarById"] = (id) => repo.getCarById(id);

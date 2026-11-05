@@ -4,11 +4,13 @@ import { FilterPanel } from "@/components/cars/FilterPanel";
 import { SearchForm } from "@/components/cars/SearchForm";
 import { SortSelect } from "@/components/cars/SortSelect";
 import { Button } from "@/components/ui/Button";
+import { ConnectionNotice, EmptyNotice } from "@/components/ui/ConnectionNotice";
 import { AlertIcon } from "@/components/ui/Icons";
 import { Container } from "@/components/ui/Container";
 import { FILTER_KEYS, parseSearchParams, windowQueryString } from "@/features/cars/search-params";
 import { formatDateTime } from "@/lib/date";
 import { listLocations, searchCars } from "@/services/cars";
+import { errorMessage } from "@/services/errors";
 
 export const metadata: Metadata = {
   title: "Cars",
@@ -23,7 +25,11 @@ type RawParams = Record<string, string | string[] | undefined>;
 export default async function CarsPage({ searchParams }: { searchParams: Promise<RawParams> }) {
   const raw = await searchParams;
   const { query, fields, windowError } = parseSearchParams(raw);
-  const [cars, locations] = await Promise.all([searchCars(query), listLocations()]);
+  // A failed search is shown as a connection problem, never as "no cars". Location suggestions are optional.
+  const [carsResult, locationsResult] = await Promise.allSettled([searchCars(query), listLocations()]);
+  const loadError = carsResult.status === "rejected" ? errorMessage(carsResult.reason) : undefined;
+  const cars = carsResult.status === "fulfilled" ? carsResult.value : [];
+  const locations = locationsResult.status === "fulfilled" ? locationsResult.value : [];
 
   // Normalise to string[] for the client components.
   const params: Record<string, string[]> = {};
@@ -36,6 +42,7 @@ export default async function CarsPage({ searchParams }: { searchParams: Promise
   const detailsQuery = query.window ? windowQueryString(fields) : "";
   const hasWindow = Boolean(query.window);
   const availableCount = cars.filter((c) => c.availability.status === "available").length;
+  const isFiltered = Boolean(query.location || query.window || Object.keys(carry).length);
 
   return (
     <>
@@ -69,15 +76,21 @@ export default async function CarsPage({ searchParams }: { searchParams: Promise
           <div>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h2 className="text-xl font-semibold text-navy-900">
-                  {cars.length} {cars.length === 1 ? "car" : "cars"}
-                  {query.location ? ` near “${query.location}”` : ""}
-                </h2>
-                <p className="mt-1 text-sm text-muted" aria-live="polite">
-                  {query.window
-                    ? `${formatDateTime(query.window.pickup)} to ${formatDateTime(query.window.return)} · ${availableCount} available`
-                    : "Showing availability from today. Add dates to check a specific trip."}
-                </p>
+                {loadError ? (
+                  <h2 className="text-xl font-semibold text-navy-900">Cars</h2>
+                ) : (
+                  <>
+                    <h2 className="text-xl font-semibold text-navy-900">
+                      {cars.length} {cars.length === 1 ? "car" : "cars"}
+                      {query.location ? ` near “${query.location}”` : ""}
+                    </h2>
+                    <p className="mt-1 text-sm text-muted" aria-live="polite">
+                      {query.window
+                        ? `${formatDateTime(query.window.pickup)} to ${formatDateTime(query.window.return)} · ${availableCount} available`
+                        : "Showing availability from today. Add dates to check a specific trip."}
+                    </p>
+                  </>
+                )}
               </div>
               <SortSelect params={params} value={query.sort} />
             </div>
@@ -89,7 +102,13 @@ export default async function CarsPage({ searchParams }: { searchParams: Promise
               </p>
             ) : null}
 
-            {cars.length > 0 ? (
+            {loadError ? (
+              <ConnectionNotice className="mt-6" title="We couldn't load cars" message={loadError}>
+                <Button href="/cars" variant="outline-navy">
+                  Try again
+                </Button>
+              </ConnectionNotice>
+            ) : cars.length > 0 ? (
               <div className="mt-6 grid gap-6 sm:grid-cols-2 2xl:grid-cols-3">
                 {cars.map((car) => (
                   <CarCard
@@ -101,16 +120,18 @@ export default async function CarsPage({ searchParams }: { searchParams: Promise
                   />
                 ))}
               </div>
-            ) : (
-              <div className="mt-6 rounded-2xl border border-dashed border-navy-900/20 bg-white px-6 py-14 text-center">
-                <h3 className="text-xl font-semibold text-navy-900">No cars match</h3>
-                <p className="mx-auto mt-2 max-w-md text-muted">
-                  Try removing a filter, widening the price range or searching a different location.
-                </p>
-                <Button href="/cars" variant="outline-navy" className="mt-6">
+            ) : isFiltered ? (
+              <EmptyNotice
+                className="mt-6"
+                title="No cars match"
+                text="Try removing a filter, widening the price range or searching a different location."
+              >
+                <Button href="/cars" variant="outline-navy">
                   Reset search
                 </Button>
-              </div>
+              </EmptyNotice>
+            ) : (
+              <EmptyNotice className="mt-6" title="No cars listed yet" text="Cars from our partners will appear here as soon as they are approved. Please check back soon." />
             )}
           </div>
         </div>

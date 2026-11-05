@@ -43,3 +43,14 @@ export const hasErrors = (errors: Record<string, string | undefined>) => Object.
 export function compact<K extends string>(errors: Record<K, string | undefined>): Errors<K> {
   return Object.fromEntries(Object.entries(errors).filter(([, v]) => v)) as Errors<K>;
 }
+
+/**
+ * Password rule for choosing a new password after a reset. The API requires 8-72 characters with a letter
+ * and a number; check the same here for instant feedback.
+ */
+export function validateResetPassword(value: string): string | undefined {
+  const base = validateNewPassword(value);
+  if (base) return base;
+  if (value.length > 72) return "Use at most 72 characters.";
+  if (!/[A-Za-z]/.test(value) || !/\d/.test(value)) return "Include at least one letter and one number.";
+}

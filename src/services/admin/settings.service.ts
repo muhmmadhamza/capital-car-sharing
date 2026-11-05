@@ -1,9 +1,7 @@
-import { httpAdminSettings } from "./http";
-import { mockAdminSettings } from "./mock/settings";
-import { isAdminApi } from "./source";
+import { apiAdminSettings } from "./api-repository";
 import type { AdminSettingsRepository } from "./contracts";
 
-const repo: AdminSettingsRepository = isAdminApi ? httpAdminSettings : mockAdminSettings;
+const repo: AdminSettingsRepository = apiAdminSettings;
 
 export const getSettings: AdminSettingsRepository["getSettings"] = () => repo.getSettings();
 export const updateSettings: AdminSettingsRepository["updateSettings"] = (input) => repo.updateSettings(input);

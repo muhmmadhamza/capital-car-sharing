@@ -6,6 +6,9 @@ import { PartnerSection } from "@/components/marketing/PartnerSection";
 import { SearchCard } from "@/components/marketing/SearchCard";
 import { WhyChoose } from "@/components/marketing/WhyChoose";
 
+// Featured cars come from the API, so this page is rendered per request, never baked at build time.
+export const dynamic = "force-dynamic";
+
 export default function HomePage() {
   return (
     <>

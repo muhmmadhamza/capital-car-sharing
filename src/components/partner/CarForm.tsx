@@ -151,7 +151,7 @@ export function CarForm({ mode, car }: { mode: "add" | "edit"; car?: PartnerCarV
   const router = useRouter();
   const { partner } = usePartnerAuth();
   const [values, setValues] = useState<CarFormValues>(() => (car ? fromCar(car) : blank()));
-  const [images, setImages] = useState<CarImage[]>(car?.images ?? []);
+  const [images, setImages] = useState<CarImage[]>((car?.images ?? []).filter((i) => i.src));
   const [features, setFeatures] = useState<string[]>(car?.features ?? []);
   const [listingStatus, setListingStatus] = useState<PartnerCarStatus>(car?.listingStatus ?? "available");
   const [errors, setErrors] = useState<Partial<Record<CarFormField, string>>>({});
@@ -208,7 +208,7 @@ export function CarForm({ mode, car }: { mode: "add" | "edit"; car?: PartnerCarV
         {formError ? <FormAlert>{formError}</FormAlert> : null}
 
         <Section title="Photos" description="Clear, well-lit photos help your car get booked.">
-          <ImageUploader images={images} onChange={(next) => { setImages(next); setErrors((p) => ({ ...p, images: undefined })); }} alt={title} error={errors.images} />
+          <ImageUploader images={images} onChange={(next) => { setImages(next); setErrors((p) => ({ ...p, images: undefined })); }} alt={title} error={errors.images} carId={mode === "edit" ? car?.id : undefined} />
         </Section>
 
         <Section title="Vehicle details">

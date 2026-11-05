@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/Button";
 import { FormAlert, FormField } from "@/components/ui/FormField";
 import { compact, hasErrors, validateEmail, type Errors } from "@/features/auth/validation";
 import { registerUrl, safeNext } from "@/features/auth/redirect";
-import { DEMO_CREDENTIALS } from "@/data/mock/customers";
 import { errorMessage } from "@/services/errors";
 import { useRedirectIfAuthenticated } from "./AuthGuard";
 import { useAuth } from "./AuthProvider";
@@ -110,27 +109,6 @@ export function LoginForm() {
         </Button>
       </form>
 
-      {/* Mock-only helper. Delete with the mock auth repository when the API goes live. */}
-      <div className="mt-6 rounded-xl border border-gold-700/30 bg-gold-500/10 p-4 text-sm text-navy-900">
-        <p className="font-semibold">Demo account</p>
-        <p className="mt-1 text-navy-700">
-          {DEMO_CREDENTIALS.email}
-          <br />
-          {DEMO_CREDENTIALS.password}
-        </p>
-        <button
-          type="button"
-          onClick={() => {
-            setEmail(DEMO_CREDENTIALS.email);
-            setPassword(DEMO_CREDENTIALS.password);
-            setErrors({});
-            setFormError(undefined);
-          }}
-          className="mt-2 text-sm font-semibold text-navy-900 underline underline-offset-2 hover:text-gold-700"
-        >
-          Fill in demo details
-        </button>
-      </div>
     </AuthCard>
   );
 }

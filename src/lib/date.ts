@@ -78,7 +78,8 @@ export const formatShortDate = (value: WallClock | DateKey) =>
 
 export const formatTime = (value: WallClock) => fmt({ hour: "numeric", minute: "2-digit" }).format(parseWall(value));
 
-export const formatDateTime = (value: WallClock) => `${formatShortDate(value)}, ${formatTime(value)}`;
+/** Date and time. A reservation that only has dates (stored as midnight) is shown as a date alone. */
+export const formatDateTime = (value: WallClock) => (value.endsWith("T00:00") ? formatShortDate(value) : `${formatShortDate(value)}, ${formatTime(value)}`);
 
 export const formatMonth = (date: DateKey) =>
   fmt({ month: "long", year: "numeric" }).format(new Date(`${date}T00:00:00Z`));

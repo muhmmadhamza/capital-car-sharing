@@ -1,9 +1,7 @@
-import { httpAdminCustomers } from "./http";
-import { mockAdminCustomers } from "./mock/customers";
-import { isAdminApi } from "./source";
+import { apiAdminCustomers } from "./api-repository";
 import type { AdminCustomerRepository } from "./contracts";
 
-const repo: AdminCustomerRepository = isAdminApi ? httpAdminCustomers : mockAdminCustomers;
+const repo: AdminCustomerRepository = apiAdminCustomers;
 
 export const getCustomers: AdminCustomerRepository["getCustomers"] = () => repo.getCustomers();
 export const getCustomerById: AdminCustomerRepository["getCustomerById"] = (id) => repo.getCustomerById(id);

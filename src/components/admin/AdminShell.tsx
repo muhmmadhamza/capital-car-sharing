@@ -11,7 +11,7 @@ import { ADMIN_LOGIN_PATH } from "@/features/admin/redirect";
 import { cn } from "@/lib/utils";
 import type { AdminRole } from "@/types/admin";
 import { AdminRouteGuard, useAdminAuth } from "./AdminAuthProvider";
-import { BuildingIcon, SettingsIcon, UsersIcon } from "./AdminIcons";
+import { BuildingIcon, SettingsIcon, ShieldCheckIcon, UsersIcon } from "./AdminIcons";
 import { AdminToastProvider } from "./ui";
 
 type IconType = ComponentType<SVGProps<SVGSVGElement>>;
@@ -30,6 +30,7 @@ const startsWith = (base: string) => (p: string) => p === base || p.startsWith(`
 const NAV: NavEntry[] = [
   { label: "Dashboard", href: "/admin", icon: DashboardIcon, match: (p) => p === "/admin" },
   { label: "Customers", href: "/admin/customers", icon: UsersIcon, match: startsWith("/admin/customers") },
+  { label: "Verifications", href: "/admin/verifications", icon: ShieldCheckIcon, match: startsWith("/admin/verifications") },
   { label: "Partners", href: "/admin/partners", icon: BuildingIcon, match: startsWith("/admin/partners") },
   { label: "Cars", href: "/admin/cars", icon: CarIcon, match: startsWith("/admin/cars") },
   { label: "Reservations", href: "/admin/reservations", icon: ListIcon, match: startsWith("/admin/reservations") },

@@ -1,20 +1,26 @@
 import { getAvailability, validateRental } from "@/features/availability";
+import { RENTAL_RULES } from "@/features/availability/rules";
 import { nowWall } from "@/lib/date";
 import type { BookingBlock, RentalValidation, RentalWindow } from "@/types/booking";
-import type { CarDetail, CarListing, Location } from "@/types/car";
+import type { Car, CarDetail, CarListing, Location } from "@/types/car";
 import type { CarSearchQuery } from "@/types/search";
-import { httpRepository } from "./http-repository";
-import { mockRepository } from "./mock-repository";
+import { apiCarsRepository } from "./api-repository";
 import type { CarsRepository } from "./repository";
 
-/** "mock" (default) or "api". Flip this once the backend is live. */
-const dataSource = process.env.CARS_DATA_SOURCE ?? process.env.NEXT_PUBLIC_CUSTOMER_DATA_SOURCE;
-const repository: CarsRepository = dataSource === "api" ? httpRepository : mockRepository;
+const repository: CarsRepository = apiCarsRepository;
+
+/** Listings only need to know about the near future: is it free now, and when does it free up. */
+const LISTING_HORIZON_DAYS = 60;
+/** The details page calendar lets people browse this far ahead. */
+const DETAIL_HORIZON_DAYS = RENTAL_RULES.calendarMonthsAhead * 31;
 
 export const listLocations = () => repository.listLocations();
 
 /** Cars by id, used by customer screens that show cars from reservations. */
 export const getCarsByIds = (ids: string[]) => repository.getCarsByIds(ids);
+
+/** The newest cars for the landing page. */
+export const getFeaturedCars = (limit = 4) => repository.getFeaturedCars(limit);
 
 function groupBlocks(blocks: BookingBlock[]): Map<string, BookingBlock[]> {
   const map = new Map<string, BookingBlock[]>();
@@ -22,21 +28,25 @@ function groupBlocks(blocks: BookingBlock[]): Map<string, BookingBlock[]> {
   return map;
 }
 
+const locationOf = (car: Car): Location => ({ id: car.locationId, name: car.locationName, city: "", address: car.locationName });
+
 /** Cars for the listing page, each with availability for the searched window. */
 export async function searchCars(query: CarSearchQuery): Promise<CarListing[]> {
   const now = nowWall();
-  const [cars, locations] = await Promise.all([
-    repository.findCars({ location: query.location, filters: query.filters }),
-    repository.listLocations(),
-  ]);
-  const blocks = groupBlocks(await repository.getBlocks(cars.map((c) => c.id), now));
-  const locationById = new Map<string, Location>(locations.map((l) => [l.id, l]));
+  const cars = await repository.findCars({ location: query.location, filters: query.filters });
+  const blocks = groupBlocks(
+    await repository.getBlocks(
+      cars.map((c) => c.id),
+      now,
+      LISTING_HORIZON_DAYS,
+    ),
+  );
 
-  let listings: CarListing[] = cars.flatMap((car) => {
-    const location = locationById.get(car.locationId);
-    if (!location) return [];
-    return [{ ...car, location, availability: getAvailability(blocks.get(car.id) ?? [], query.window, now) }];
-  });
+  let listings: CarListing[] = cars.map((car) => ({
+    ...car,
+    location: locationOf(car),
+    availability: getAvailability(blocks.get(car.id) ?? [], query.window, now),
+  }));
 
   if (query.availableOnly) listings = listings.filter((c) => c.availability.status === "available");
 
@@ -49,15 +59,13 @@ export async function searchCars(query: CarSearchQuery): Promise<CarListing[]> {
   return listings;
 }
 
-/** One car with everything the details page and calendar need. */
+/** One car with everything the details page and calendar need. Returns null when there is no such car. */
 export async function getCarDetail(slug: string, window?: RentalWindow): Promise<CarDetail | null> {
   const car = await repository.getCarBySlug(slug);
   if (!car) return null;
   const now = nowWall();
-  const [locations, blocks] = await Promise.all([repository.listLocations(), repository.getBlocks([car.id], now)]);
-  const location = locations.find((l) => l.id === car.locationId);
-  if (!location) return null;
-  return { ...car, location, blocks, now, availability: getAvailability(blocks, window, now) };
+  const blocks = await repository.getBlocks([car.id], now, DETAIL_HORIZON_DAYS);
+  return { ...car, location: locationOf(car), blocks, now, availability: getAvailability(blocks, window, now) };
 }
 
 /**
@@ -66,6 +74,6 @@ export async function getCarDetail(slug: string, window?: RentalWindow): Promise
  */
 export async function checkRental(carId: string, pickup?: string, ret?: string): Promise<RentalValidation> {
   const now = nowWall();
-  const blocks = await repository.getBlocks([carId], now);
+  const blocks = await repository.getBlocks([carId], now, DETAIL_HORIZON_DAYS);
   return validateRental(blocks, pickup, ret, now);
 }

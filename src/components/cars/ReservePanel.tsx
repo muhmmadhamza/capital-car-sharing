@@ -111,10 +111,12 @@ export function ReservePanel({
             </dt>
             <dd className="font-medium text-navy-900">{formatPrice(rental)}</dd>
           </div>
-          <div className="flex justify-between gap-4">
-            <dt className="text-navy-700">Refundable deposit</dt>
-            <dd className="font-medium text-navy-900">{formatPrice(car.depositAmount)}</dd>
-          </div>
+          {car.depositAmount !== undefined ? (
+            <div className="flex justify-between gap-4">
+              <dt className="text-navy-700">Refundable deposit</dt>
+              <dd className="font-medium text-navy-900">{formatPrice(car.depositAmount)}</dd>
+            </div>
+          ) : null}
           <div className="flex justify-between gap-4 border-t border-navy-900/10 pt-3 text-base">
             <dt className="font-semibold text-navy-900">Estimated rental</dt>
             <dd className="font-display font-semibold text-navy-900">{formatPrice(rental)}</dd>

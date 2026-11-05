@@ -3,26 +3,35 @@
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/Button";
-import { FormField } from "@/components/ui/FormField";
-import { CheckIcon } from "@/components/ui/Icons";
+import { FormAlert, FormField } from "@/components/ui/FormField";
 import { ADMIN_LOGIN_PATH } from "@/features/admin/redirect";
 import { validateEmail } from "@/features/auth/validation";
+import { adminPasswordReset } from "@/services/admin/password-reset.service";
+import { errorMessage } from "@/services/errors";
 import { AdminAuthLayout } from "./AdminAuthLayout";
 
-/**
- * Mock: nothing is sent. The API will email a single-use reset link and always
- * show this same message, so the form never reveals which emails have accounts.
- */
 export function AdminForgotPasswordForm() {
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string>();
-  const [sent, setSent] = useState(false);
+  const [formError, setFormError] = useState<string>();
+  const [message, setMessage] = useState<string>();
+  const [submitting, setSubmitting] = useState(false);
 
-  function onSubmit(e: FormEvent) {
+  async function onSubmit(e: FormEvent) {
     e.preventDefault();
     const found = validateEmail(email);
     setError(found);
-    if (!found) setSent(true);
+    setFormError(undefined);
+    if (found) return;
+
+    setSubmitting(true);
+    try {
+      setMessage(await adminPasswordReset.request(email));
+    } catch (err) {
+      setFormError(errorMessage(err));
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -35,13 +44,13 @@ export function AdminForgotPasswordForm() {
         </Link>
       }
     >
-      {sent ? (
-        <p role="status" className="flex items-start gap-2 rounded-lg border border-[#1E6B45]/25 bg-[#E7F4EC] px-4 py-3 text-sm text-[#14543A]">
-          <CheckIcon width={18} height={18} className="mt-0.5 shrink-0" />
-          If an admin account exists for {email.trim()}, a reset link is on its way. Password reset emails will be live once the backend is connected.
+      {message ? (
+        <p role="status" className="rounded-lg border border-gold-700/30 bg-gold-500/15 px-4 py-3 text-sm text-navy-900">
+          {message} The link is valid for a limited time and can be used once.
         </p>
       ) : (
         <form onSubmit={onSubmit} noValidate className="space-y-4">
+          {formError ? <FormAlert>{formError}</FormAlert> : null}
           <FormField
             label="Email"
             type="email"
@@ -54,8 +63,8 @@ export function AdminForgotPasswordForm() {
               setError(undefined);
             }}
           />
-          <Button type="submit" variant="navy" size="lg" className="w-full">
-            Send reset link
+          <Button type="submit" variant="navy" size="lg" className="w-full" disabled={submitting}>
+            {submitting ? "Sending…" : "Send reset link"}
           </Button>
         </form>
       )}

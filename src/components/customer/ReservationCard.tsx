@@ -2,7 +2,7 @@ import Link from "next/link";
 import { CarImageView } from "@/components/cars/CarImageView";
 import { CalendarIcon, ChevronRightIcon, PinIcon } from "@/components/ui/Icons";
 import { formatDateTime } from "@/lib/date";
-import { cn, formatPrice } from "@/lib/utils";
+import { cn, formatLocation, formatPrice } from "@/lib/utils";
 import type { ReservationView } from "@/types/reservation";
 import { StatusBadge } from "./StatusBadge";
 import { panel } from "./States";
@@ -32,7 +32,7 @@ export function ReservationCard({ reservation: r }: { reservation: ReservationVi
               <dt className="sr-only">Pickup location</dt>
               <dd className="flex items-center gap-2 text-navy-900">
                 <PinIcon width={16} height={16} className="shrink-0 text-gold-700" />
-                {r.location.name}, {r.location.city}
+                {formatLocation(r.location)}
               </dd>
             </div>
             <div>

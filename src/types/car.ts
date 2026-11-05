@@ -1,9 +1,9 @@
 import type { AvailabilityResult, BookingBlock, WallClock } from "./booking";
 
-export type CarBodyType = "sedan" | "suv" | "hatch" | "coupe";
+export type CarBodyType = "sedan" | "suv" | "hatch" | "coupe" | "luxury" | "van" | "convertible" | "pickup";
 
 export type Transmission = "Automatic" | "Manual";
-export type FuelType = "Petrol" | "Diesel" | "Hybrid" | "Electric";
+export type FuelType = "Petrol" | "Diesel" | "Hybrid" | "Electric" | "CNG";
 
 export interface CarImage {
   /** Absolute or site-relative URL. Leave empty to show the placeholder illustration. */
@@ -27,23 +27,26 @@ export interface Car {
   pricePerDay: number;
   /** Paint colour used by the placeholder illustration until real photos exist. */
   paint: string;
-  /** Pickup branch. */
+  /** Pickup branch id. */
   locationId: string;
+  /** Pickup place as the owner typed it, e.g. "Gulberg, Lahore". */
+  locationName: string;
   doors: number;
-  /** Large suitcases that fit. */
-  luggage: number;
+  /** Large suitcases that fit. Not provided by the API yet, so screens hide it when missing. */
+  luggage?: number;
   description: string;
   features: string[];
   images: CarImage[];
-  /** Refundable security deposit, in the site currency. */
-  depositAmount: number;
-  /** Kilometres included per day. */
-  mileagePerDay: number;
+  /** Refundable security deposit, in the site currency. Not provided by the API yet. */
+  depositAmount?: number;
+  /** Kilometres included per day. Not provided by the API yet. */
+  mileagePerDay?: number;
 }
 
 export interface Location {
   id: string;
   name: string;
+  /** Empty when the API only gives one free-text location. */
   city: string;
   address: string;
 }
@@ -66,4 +69,8 @@ export const BODY_TYPE_LABELS: Record<CarBodyType, string> = {
   suv: "SUV",
   hatch: "Hatchback",
   coupe: "Coupe",
+  luxury: "Luxury",
+  van: "Van",
+  convertible: "Convertible",
+  pickup: "Pickup",
 };

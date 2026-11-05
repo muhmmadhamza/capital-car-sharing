@@ -1,9 +1,7 @@
-import { httpAdminPartners } from "./http";
-import { mockAdminPartners } from "./mock/partners";
-import { isAdminApi } from "./source";
+import { apiAdminPartners } from "./api-repository";
 import type { AdminPartnerRepository } from "./contracts";
 
-const repo: AdminPartnerRepository = isAdminApi ? httpAdminPartners : mockAdminPartners;
+const repo: AdminPartnerRepository = apiAdminPartners;
 
 export const getPartners: AdminPartnerRepository["getPartners"] = () => repo.getPartners();
 export const getPartnerById: AdminPartnerRepository["getPartnerById"] = (id) => repo.getPartnerById(id);

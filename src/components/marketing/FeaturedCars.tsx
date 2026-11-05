@@ -1,10 +1,22 @@
-import { featuredCars } from "@/data/featured-cars";
 import { CarCard } from "@/components/cars/CarCard";
 import { Button } from "@/components/ui/Button";
+import { ConnectionNotice, EmptyNotice } from "@/components/ui/ConnectionNotice";
 import { Container } from "@/components/ui/Container";
 import { SectionHeading } from "@/components/ui/SectionHeading";
+import { errorMessage } from "@/services/errors";
+import { getFeaturedCars } from "@/services/cars";
+import type { Car } from "@/types/car";
 
-export function FeaturedCars() {
+/** The newest cars from the API. Shows a connection notice or an empty state instead of placeholder cars. */
+export async function FeaturedCars() {
+  let cars: Car[] = [];
+  let error: string | undefined;
+  try {
+    cars = await getFeaturedCars(4);
+  } catch (e) {
+    error = errorMessage(e);
+  }
+
   return (
     <section id="cars" className="scroll-mt-20 py-20 lg:py-28">
       <Container>
@@ -17,10 +29,18 @@ export function FeaturedCars() {
           </Button>
         </div>
 
-        <div className="mt-12 grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
-          {featuredCars.map((car) => (
-            <CarCard key={car.id} car={car} />
-          ))}
+        <div className="mt-12">
+          {error ? (
+            <ConnectionNotice title="Featured cars are unavailable" message={error} />
+          ) : cars.length === 0 ? (
+            <EmptyNotice title="No cars listed yet" text="Cars from our partners will appear here as soon as they are approved." />
+          ) : (
+            <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+              {cars.map((car) => (
+                <CarCard key={car.id} car={car} />
+              ))}
+            </div>
+          )}
         </div>
       </Container>
     </section>

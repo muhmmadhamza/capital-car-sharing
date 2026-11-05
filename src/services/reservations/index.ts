@@ -1,25 +1,28 @@
 import { rentalDays } from "@/lib/date";
-import type { Car, Location } from "@/types/car";
-import type { Reservation, ReservationView } from "@/types/reservation";
-import { getCarsByIds, listLocations } from "../cars";
+import type { Car } from "@/types/car";
+import type { ReservationView } from "@/types/reservation";
+import { getCarsByIds } from "../cars";
 import { ServiceError } from "../errors";
-import { httpReservationsRepository } from "./http-repository";
-import { mockReservationsRepository } from "./mock-repository";
+import { locationFromText } from "../mappers/cars";
+import type { ReservationRecord } from "../mappers/customer";
+import { apiReservationsRepository } from "./api-repository";
 import type { ReservationsRepository } from "./repository";
 
-const repository: ReservationsRepository =
-  process.env.NEXT_PUBLIC_CUSTOMER_DATA_SOURCE === "api" ? httpReservationsRepository : mockReservationsRepository;
+const repository: ReservationsRepository = apiReservationsRepository;
 
-/** Join reservations with their car and branch. Reservations whose car was removed are skipped. */
-async function toViews(reservations: Reservation[]): Promise<ReservationView[]> {
+/**
+ * Join reservations with their car. A reservation whose car is no longer public is left out,
+ * because there is nothing real to draw it with.
+ */
+async function toViews(reservations: ReservationRecord[]): Promise<ReservationView[]> {
   if (reservations.length === 0) return [];
-  const [cars, locations] = await Promise.all([getCarsByIds([...new Set(reservations.map((r) => r.carId))]), listLocations()]);
+  const cars = await getCarsByIds([...new Set(reservations.map((r) => r.carId))]);
   const carById = new Map<string, Car>(cars.map((c) => [c.id, c]));
-  const locationById = new Map<string, Location>(locations.map((l) => [l.id, l]));
   return reservations.flatMap((r) => {
     const car = carById.get(r.carId);
-    const location = locationById.get(r.pickupLocation) ?? (car ? locationById.get(car.locationId) : undefined);
-    return car && location ? [{ ...r, car, location, days: rentalDays(r.pickupDate, r.returnDate) }] : [];
+    if (!car) return [];
+    const location = locationFromText(r.pickupLocationName || car.locationName);
+    return [{ ...r, car, location, days: rentalDays(r.pickupDate, r.returnDate) }];
   });
 }
 

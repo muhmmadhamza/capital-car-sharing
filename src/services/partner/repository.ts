@@ -10,25 +10,22 @@ import type {
 
 /**
  * Data-access contract for everything a partner manages: cars, availability
- * and reservations. The UI only calls src/services/partner, so the mock can be
- * replaced by Next.js -> Node.js API -> PostgreSQL without touching a screen.
+ * and reservations. The UI only calls src/services/partner.
  *
- * Every call is scoped to the signed-in partner. In mock mode the partner id is
- * passed in; the real API reads it from the session cookie and ignores any id
- * the browser sends.
+ * Every call is scoped to the signed-in partner by the session token; the
+ * `partnerId` arguments are kept so screens can tell which partner a result
+ * belongs to, and the API ignores anything the browser sends as an id.
  *
- * Planned API, all under /api/v1 (404 when the item is not the partner's):
- *   GET    /partner/stats                                    -> PartnerStats
- *   GET    /partner/cars                                     -> PartnerCarView[]
- *   POST   /partner/cars               PartnerCarInput       -> PartnerCarView   (starts as "pending")
- *   GET    /partner/cars/:id                                 -> PartnerCarView
- *   PATCH  /partner/cars/:id           PartnerCarInput + listingStatus -> PartnerCarView
- *   DELETE /partner/cars/:id                                 -> 204   (409 conflict while reservations are open)
- *   POST   /partner/cars/images        multipart image       -> { url }
- *   GET    /partner/cars/:id/availability?month=YYYY-MM-01   -> Availability[]
- *   PUT    /partner/cars/:id/availability  { dates, status } -> 204   (409 conflict if a date is booked)
- *   GET    /partner/reservations                             -> PartnerReservationView[]
- *   GET    /partner/reservations/:id                         -> PartnerReservationView
+ * Implemented by ./api-repository.ts on top of src/services/api/partner.service.ts:
+ *   GET    /partners/me/cars                 POST /partners/me/cars
+ *   GET    /partners/me/cars/:id             PUT  /partners/me/cars/:id
+ *   DELETE /partners/me/cars/:id
+ *   POST   /partners/me/cars/:id/images   (photo for an existing car)    POST /partners/me/car-images   (new car)
+ *   GET    /partners/me/cars/:id/availability?startDate=&endDate=   (calendar of an own car, published or not)
+ *   PUT    /partners/me/cars/:id/availability   { dates, status }   (409 when a day is booked)
+ *
+ * Not offered by the backend yet. These report "unavailable" (or show a dash) instead of inventing data:
+ *   - the partner's reservations, and the reservation figures on the dashboard
  */
 export interface PartnerDataRepository {
   getStats(partnerId: string): Promise<PartnerStats>;
@@ -38,7 +35,11 @@ export interface PartnerDataRepository {
   createCar(partnerId: string, input: PartnerCarInput): Promise<PartnerCarView>;
   updateCar(partnerId: string, carId: string, input: PartnerCarInput, listingStatus?: PartnerCarStatus): Promise<PartnerCarView>;
   deleteCar(partnerId: string, carId: string): Promise<void>;
-  uploadCarImage(file: File): Promise<string>;
+  /**
+   * Uploads a photo and returns its URL. Pass `carId` when the car already exists so the photo is saved
+   * to it immediately; otherwise the URL is saved with the car by createCar. `onProgress` gets 0-100.
+   */
+  uploadCarImage(file: File, opts?: { carId?: string; onProgress?: (percent: number) => void }): Promise<string>;
 
   /** One row per day of the month, with "booked" days included and read-only. */
   getAvailability(partnerId: string, carId: string, month: DateKey): Promise<Availability[]>;

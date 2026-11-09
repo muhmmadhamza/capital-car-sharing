@@ -1,6 +1,6 @@
 import type { WallClock } from "./booking";
 import type { CarBodyType } from "./car";
-import type { ReservationStatus } from "./reservation";
+import type { ReservationStatus, StatusHistoryEntry } from "./reservation";
 
 /**
  * Types for the ADMIN module. Customers, partners, cars and reservations are
@@ -142,6 +142,10 @@ export interface AdminReservation {
   totalPrice: number;
   /** ISO 8601 timestamp. */
   createdAt: string;
+  /** Unique booking reference, e.g. "CCS-261108-K7M2X". */
+  bookingReference?: string;
+  /** Why the booking was rejected or cancelled. */
+  statusReason?: string;
 }
 
 // ------------------------------------------------------------------------ views
@@ -176,6 +180,8 @@ export interface AdminReservationDetail extends AdminReservationView {
   carLocationName: string;
   /** Billable days, same rule as the customer and partner areas. */
   days: number;
+  /** Every status change, oldest first, with who made it. */
+  history: StatusHistoryEntry[];
 }
 
 export interface AdminCustomerRow extends AdminCustomer {
@@ -220,8 +226,13 @@ export interface AdminStats {
   availableCars: number;
   bookedCars: number;
   totalReservations: number;
-  upcomingReservations: number;
+  /** Waiting for a partner's decision. */
+  pendingReservations: number;
+  /** Approved and not finished. */
+  confirmedReservations: number;
   completedReservations: number;
+  cancelledReservations: number;
+  rejectedReservations: number;
 }
 
 /** Counts that need an admin's attention. */

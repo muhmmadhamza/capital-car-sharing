@@ -1,6 +1,6 @@
 import type { DateKey, WallClock } from "./booking";
 import type { CarBodyType, CarImage, FuelType, Transmission } from "./car";
-import type { ReservationStatus } from "./reservation";
+import type { ReservationStatus, StatusHistoryEntry } from "./reservation";
 
 /**
  * A partner (car owner or fleet company). Matches the `partners` table; the
@@ -96,7 +96,7 @@ export interface PartnerCarView extends PartnerCar {
   today?: CarDayStatus;
   /** The date `today` refers to, as the server calculated it (business time zone). */
   todayDate?: DateKey;
-  /** Soonest upcoming or active reservation, when there is one. */
+  /** Soonest confirmed reservation, when there is one. */
   nextReservationAt?: WallClock;
 }
 
@@ -126,6 +126,12 @@ export interface PartnerReservation {
   dailyPrice: number;
   /** dailyPrice × billable days. */
   totalPrice: number;
+  /** Unique reference, e.g. "CCS-261108-K7M2X". */
+  bookingReference?: string;
+  /** Why the booking was rejected or cancelled. */
+  statusReason?: string;
+  /** ISO 8601. When the request was made. */
+  createdAt?: string;
 }
 
 /** The only customer details a partner is allowed to see on a reservation. */
@@ -136,17 +142,35 @@ export interface ReservationCustomer {
   phone: string;
 }
 
+/** What a reservation tells a partner about the car. The reservation endpoints send these fields only. */
+export type ReservationCar = Pick<PartnerCar, "id" | "make" | "model" | "year" | "type" | "images" | "location">;
+
 export interface PartnerReservationView extends PartnerReservation {
   customer: ReservationCustomer;
-  car: PartnerCar;
+  car: ReservationCar;
   days: number;
+  /** Price breakdown as stored at booking time. */
+  pricing?: { subtotal: number; serviceFee: number; tax: number; total: number };
+  /** Status changes, oldest first. Only on the details call. */
+  history?: StatusHistoryEntry[];
+}
+
+/** Filters the partner's reservation list understands. The API applies them. */
+export interface PartnerReservationFilters {
+  status?: ReservationStatus;
+  carId?: string;
+  /** Booking reference, customer name or email, car make or model. */
+  search?: string;
 }
 
 export interface PartnerStats {
   totalCars: number;
   availableCars: number;
-  /** `null` while the backend cannot provide reservation figures. Screens show a dash, never a made-up number. */
-  bookedCars: number | null;
-  upcomingReservations: number | null;
-  totalReservations: number | null;
+  /** Cars whose calendar shows today as booked. */
+  bookedCars: number;
+  /** Requests waiting for the partner's decision. */
+  pendingReservations: number;
+  /** Confirmed bookings that have not ended yet. */
+  upcomingReservations: number;
+  totalReservations: number;
 }

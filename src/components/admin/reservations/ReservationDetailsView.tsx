@@ -9,14 +9,18 @@ import { carLabel, formatIsoDateTime } from "@/features/admin/format";
 import { useAsync } from "@/hooks/useAsync";
 import { formatDateTime } from "@/lib/date";
 import { formatPrice } from "@/lib/utils";
-import { getReservationById } from "@/services/admin/reservation.service";
+import { getReservationById, setReservationStatus } from "@/services/admin/reservation.service";
+import { StatusActions } from "@/components/ui/StatusActions";
+import { StatusHistory } from "@/components/ui/StatusHistory";
+import { adminActions } from "@/features/reservations/status";
+import type { ReservationStatus } from "@/types/reservation";
 import { BODY_TYPE_LABELS } from "@/types/car";
 import { BuildingIcon } from "../AdminIcons";
 import { AdminCard } from "../controls";
 import { BackLink, EmptyState, ErrorState, LoadingRows, Meta, PageHeader, StatusPill, panel } from "../ui";
 
 export function ReservationDetailsView({ id }: { id: string }) {
-  const { data: r, loading, error, reload } = useAsync(() => getReservationById(id), [id]);
+  const { data: r, loading, error, reload, setData } = useAsync(() => getReservationById(id), [id]);
   const back = <BackLink href="/admin/reservations">All reservations</BackLink>;
 
   if (loading && !r) {
@@ -44,6 +48,10 @@ export function ReservationDetailsView({ id }: { id: string }) {
         </div>
       </>
     );
+  }
+
+  async function act(to: ReservationStatus, reason?: string) {
+    setData(await setReservationStatus(r!.id, to, reason));
   }
 
   const dayLabel = `${r.days} day${r.days === 1 ? "" : "s"}`;
@@ -121,10 +129,20 @@ export function ReservationDetailsView({ id }: { id: string }) {
 
           <AdminCard title="Reservation">
             <dl className="grid gap-x-6 gap-y-5 sm:grid-cols-2">
+              <Meta label="Booking reference" value={<span className="font-mono text-sm font-semibold">{r.bookingReference ?? "—"}</span>} />
               <Meta label="Reservation ID" value={<span className="font-mono text-sm">{r.id}</span>} />
               <Meta label="Status" value={<StatusPill tone={reservationTone(r.status)}>{RESERVATION_LABELS[r.status]}</StatusPill>} />
               <Meta label="Booked on" value={formatIsoDateTime(r.createdAt)} />
+              {r.statusReason ? <Meta label="Reason" value={r.statusReason} /> : null}
             </dl>
+          </AdminCard>
+
+          <AdminCard title="Manage status" description="The server checks every change: invalid steps are refused, and rejecting or cancelling needs a reason the customer can see.">
+            <StatusActions actions={adminActions(r.status)} onAct={act} note="This booking is final and can no longer be changed." />
+          </AdminCard>
+
+          <AdminCard title="Status history" description="Who changed the status, and when.">
+            <StatusHistory entries={r.history} />
           </AdminCard>
         </div>
       </div>

@@ -7,6 +7,8 @@ export type ServiceErrorCode =
   | "forbidden"
   | "not_found"
   | "not_cancellable"
+  /** Booking refused because the customer's identity verification is not approved. `verificationStatus` says which state. */
+  | "verification_required"
   | "invalid_input"
   | "conflict"
   | "network"
@@ -24,6 +26,8 @@ export class ServiceError extends Error {
     message: string,
     /** Form field the error belongs to, when there is one. */
     public readonly field?: string,
+    /** Set with code "verification_required". */
+    public readonly verificationStatus?: string,
   ) {
     super(message);
     this.name = "ServiceError";
@@ -47,7 +51,12 @@ export function toServiceError(e: unknown, fallback: ServiceErrorCode = "invalid
   if (!(e instanceof ApiError)) return e;
   if (e.status === 0) return new ServiceError("network", e.message);
   if (e.status === 401) return new ServiceError("unauthenticated", e.message);
-  if (e.status === 403) return new ServiceError("forbidden", e.message);
+  if (e.status === 403) {
+    // The booking gate answers 403 with errors: ["verificationStatus:<status>"] and a message that explains why.
+    const status = e.errors?.find((x) => x.startsWith("verificationStatus:"))?.slice("verificationStatus:".length);
+    if (status) return new ServiceError("verification_required", e.message, undefined, status);
+    return new ServiceError("forbidden", e.message);
+  }
   if (e.status === 404) return new ServiceError("not_found", e.message);
   if (e.status === 409) return new ServiceError(/e-?mail/i.test(e.message) ? "email_taken" : "conflict", e.message, /e-?mail/i.test(e.message) ? "email" : undefined);
   if (e.status >= 500) return new ServiceError("network", "The server had a problem. Please try again in a moment.");

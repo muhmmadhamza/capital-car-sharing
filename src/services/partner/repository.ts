@@ -3,6 +3,7 @@ import type {
   Availability,
   PartnerCarInput,
   PartnerCarView,
+  PartnerReservationFilters,
   PartnerReservationView,
   PartnerStats,
   PartnerCarStatus,
@@ -23,9 +24,11 @@ import type {
  *   POST   /partners/me/cars/:id/images   (photo for an existing car)    POST /partners/me/car-images   (new car)
  *   GET    /partners/me/cars/:id/availability?startDate=&endDate=   (calendar of an own car, published or not)
  *   PUT    /partners/me/cars/:id/availability   { dates, status }   (409 when a day is booked)
+ *   GET    /partners/me/reservations?status=&carId=&search=     (own cars only)
+ *   GET    /partners/me/reservations/stats    GET /partners/me/reservations/:id   (404 for anyone else's)
+ *   PATCH  /partners/me/reservations/:id/approve | /reject {reason} | /complete
  *
- * Not offered by the backend yet. These report "unavailable" (or show a dash) instead of inventing data:
- *   - the partner's reservations, and the reservation figures on the dashboard
+ * The server checks ownership and the status transition on every call; the screens only offer valid actions.
  */
 export interface PartnerDataRepository {
   getStats(partnerId: string): Promise<PartnerStats>;
@@ -46,6 +49,11 @@ export interface PartnerDataRepository {
   /** Marks days available or unavailable. Rejects the whole request if any day is booked. */
   setAvailability(partnerId: string, carId: string, dates: DateKey[], status: "available" | "unavailable"): Promise<void>;
 
-  listReservations(partnerId: string): Promise<PartnerReservationView[]>;
+  listReservations(partnerId: string, filters?: PartnerReservationFilters): Promise<PartnerReservationView[]>;
+  /** Includes the status history. */
   getReservation(partnerId: string, reservationId: string): Promise<PartnerReservationView | null>;
+  /** Each returns the updated booking. The server refuses invalid changes (409) and unknown or foreign ids (404). */
+  approveReservation(partnerId: string, reservationId: string): Promise<PartnerReservationView>;
+  rejectReservation(partnerId: string, reservationId: string, reason: string): Promise<PartnerReservationView>;
+  completeReservation(partnerId: string, reservationId: string): Promise<PartnerReservationView>;
 }

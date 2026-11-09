@@ -21,8 +21,9 @@ export function PartnerDashboardView() {
   const upcoming = useMemo(
     () =>
       (reservations.data ?? [])
-        .filter((r) => r.status === "upcoming" || r.status === "active")
-        .sort((a, b) => a.pickupDate.localeCompare(b.pickupDate))
+        .filter((r) => r.status === "pending" || r.status === "confirmed")
+        // Requests waiting for a decision first, then by pickup date.
+        .sort((a, b) => Number(b.status === "pending") - Number(a.status === "pending") || a.pickupDate.localeCompare(b.pickupDate))
         .slice(0, 4),
     [reservations.data],
   );
@@ -41,11 +42,11 @@ export function PartnerDashboardView() {
               ? "Loading your fleet…"
               : s.totalCars === 0
                 ? "Add your first car and start earning when it is parked."
-                : s.bookedCars
-                  ? `${s.bookedCars} of your ${s.totalCars === 1 ? "car is" : "cars are"} out on a rental right now.`
-                  : s.upcomingReservations !== null
-                    ? `You have ${s.upcomingReservations} upcoming ${s.upcomingReservations === 1 ? "reservation" : "reservations"}.`
-                    : `You have ${s.totalCars} ${s.totalCars === 1 ? "car" : "cars"} listed.`}
+                : s.pendingReservations
+                  ? `${s.pendingReservations} ${s.pendingReservations === 1 ? "booking request is" : "booking requests are"} waiting for your decision.`
+                  : s.bookedCars
+                    ? `${s.bookedCars} of your ${s.totalCars === 1 ? "car is" : "cars are"} out on a rental right now.`
+                    : `You have ${s.upcomingReservations} upcoming ${s.upcomingReservations === 1 ? "reservation" : "reservations"}.`}
           </p>
           <div className="mt-5 flex flex-col gap-3 sm:flex-row">
             <Button href="/partner/cars/new">
@@ -61,12 +62,13 @@ export function PartnerDashboardView() {
       {stats.error ? (
         <ErrorBlock message={stats.error} onRetry={stats.reload} />
       ) : (
-        <section aria-label="Fleet summary" className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-5">
+        <section aria-label="Fleet summary" className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-6">
           <StatCard label="Total cars" value={s?.totalCars} tone="bg-navy-900" />
           <StatCard label="Available cars" value={s?.availableCars} tone="bg-[#1E6B45]" />
           <StatCard label="Currently booked" value={s?.bookedCars} tone="bg-navy-700" />
-          <StatCard label="Upcoming reservations" value={s?.upcomingReservations} tone="bg-gold-500" />
-          <StatCard label="Total reservations" value={s?.totalReservations} tone="bg-gold-700" className="col-span-2 lg:col-span-1" />
+          <StatCard label="Pending requests" value={s?.pendingReservations} tone="bg-gold-500" />
+          <StatCard label="Upcoming reservations" value={s?.upcomingReservations} tone="bg-gold-700" />
+          <StatCard label="Total reservations" value={s?.totalReservations} tone="bg-navy-900" />
         </section>
       )}
 
@@ -74,7 +76,7 @@ export function PartnerDashboardView() {
         <section aria-labelledby="upcoming-heading">
           <div className="mb-3 flex items-center justify-between gap-4">
             <h2 id="upcoming-heading" className="text-lg font-semibold text-navy-900">
-              Next reservations
+              Requests and next reservations
             </h2>
             <Link href="/partner/reservations" className="text-sm font-semibold text-navy-900 underline underline-offset-2 hover:text-gold-700">
               View all

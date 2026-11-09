@@ -90,6 +90,6 @@ export function filterReservations(rows: AdminReservationView[], f: ReservationF
       (f.carId === "all" || r.carId === f.carId) &&
       (!f.dateFrom || dateOf(r.returnDate) >= f.dateFrom) &&
       (!f.dateTo || dateOf(r.pickupDate) <= f.dateTo) &&
-      matches(f.query, [r.id, r.customerName, r.carName, r.partnerName, r.pickupLocation]),
+      matches(f.query, [r.id, r.bookingReference ?? "", r.customerName, r.carName, r.partnerName, r.pickupLocation]),
   );
 }

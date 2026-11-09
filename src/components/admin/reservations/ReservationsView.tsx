@@ -16,7 +16,7 @@ import { CheckCircleIcon } from "../AdminIcons";
 import { ClearFiltersButton, DateFilter, FilterSelect, SearchInput, type FilterOption } from "../controls";
 import { EmptyState, ErrorState, LoadingRows, Meta, PageHeader, Pagination, RowActions, StatCard, StatusPill, panel } from "../ui";
 
-const STATUSES: ReservationStatus[] = ["upcoming", "active", "completed", "cancelled"];
+const STATUSES: ReservationStatus[] = ["pending", "confirmed", "completed", "cancelled", "rejected"];
 const isStatus = (v: string | null): v is ReservationStatus => STATUSES.some((s) => s === v);
 
 const th = "whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-navy-700";
@@ -68,18 +68,19 @@ export function ReservationsView() {
       <PageHeader title="Reservations" description="Every booking across customers and partners. Open one to see who rented what, and when." />
 
       {data ? (
-        <section aria-label="Reservation summary" className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-          <StatCard label="Upcoming" value={count("upcoming")} icon={CalendarIcon} />
-          <StatCard label="Active" value={count("active")} icon={ClockIcon} />
+        <section aria-label="Reservation summary" className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-5">
+          <StatCard label="Pending" value={count("pending")} icon={ClockIcon} />
+          <StatCard label="Confirmed" value={count("confirmed")} icon={CalendarIcon} />
           <StatCard label="Completed" value={count("completed")} icon={CheckCircleIcon} />
           <StatCard label="Cancelled" value={count("cancelled")} icon={XCircleIcon} />
+          <StatCard label="Rejected" value={count("rejected")} icon={XCircleIcon} />
         </section>
       ) : null}
 
       <section className={panel} aria-label="Reservation list">
         <div className="grid gap-3 border-b border-navy-900/10 p-4 sm:grid-cols-2 sm:p-5 xl:grid-cols-4">
           <div className="sm:col-span-2 xl:col-span-2">
-            <SearchInput value={filters.query} placeholder="Reservation ID, customer, car or partner" onChange={(v) => set("query", v)} />
+            <SearchInput value={filters.query} placeholder="Booking reference, customer, car or partner" onChange={(v) => set("query", v)} />
           </div>
           <FilterSelect label="Status" value={filters.status} allLabel="All statuses" options={statusOptions} onChange={(v) => set("status", v as ReservationFilters["status"])} />
           <FilterSelect label="Customer" value={filters.customerId} allLabel="All customers" options={customerOptions} onChange={(v) => set("customerId", v)} />
@@ -138,7 +139,7 @@ export function ReservationsView() {
                   {visible.map((r) => (
                     <tr key={r.id} className="hover:bg-navy-900/[0.02]">
                       <td className={`${td} whitespace-nowrap font-mono text-xs`}>
-                        <Link href={`/admin/reservations/${r.id}`} className="font-semibold hover:text-gold-700">{r.id}</Link>
+                        <Link href={`/admin/reservations/${r.id}`} className="font-semibold hover:text-gold-700">{r.bookingReference ?? r.id}</Link>
                       </td>
                       <td className={td}>
                         <Link href={`/admin/customers/${r.customerId}`} className="block max-w-[9rem] truncate font-medium hover:text-gold-700" title={r.customerName}>{r.customerName}</Link>
@@ -180,7 +181,7 @@ export function ReservationsView() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <Link href={`/admin/reservations/${r.id}`} className="block truncate font-semibold text-navy-900 hover:text-gold-700">{r.carName}</Link>
-                      <p className="font-mono text-xs text-muted">{r.id}</p>
+                      <p className="font-mono text-xs text-muted">{r.bookingReference ?? r.id}</p>
                     </div>
                     <StatusPill tone={reservationTone(r.status)}>{RESERVATION_LABELS[r.status]}</StatusPill>
                   </div>

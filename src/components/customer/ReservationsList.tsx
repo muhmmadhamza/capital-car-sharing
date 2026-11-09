@@ -19,9 +19,9 @@ export function ReservationsList() {
   const visible = useMemo(() => {
     const list = (data ?? []).filter((r) => filter === "all" || r.status === filter);
     // Trips still to come read best soonest-first; history reads best newest-first.
-    const rank = { active: 0, upcoming: 1, completed: 2, cancelled: 3 } as const;
+    const rank = { confirmed: 0, pending: 1, completed: 2, cancelled: 3, rejected: 4 } as const;
     return [...list].sort((a, b) => {
-      if (a.status === "upcoming" && b.status === "upcoming") return a.pickupDate.localeCompare(b.pickupDate);
+      if ((a.status === "pending" || a.status === "confirmed") && a.status === b.status) return a.pickupDate.localeCompare(b.pickupDate);
       return rank[a.status] - rank[b.status] || b.pickupDate.localeCompare(a.pickupDate);
     });
   }, [data, filter]);

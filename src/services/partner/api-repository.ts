@@ -1,10 +1,10 @@
-import { addDays, addMonths, daysInMonth, dateOf } from "@/lib/date";
+import { addDays, addMonths, daysInMonth, dateOf, nowWall } from "@/lib/date";
 import type { CarInput } from "@/types/api";
 import type { Availability, CarDayStatus, PartnerCarStatus } from "@/types/partner";
 import { partnerService } from "../api/partner.service";
-import { guard, isServiceError, ServiceError, unavailable } from "../errors";
+import { guard, isServiceError, ServiceError } from "../errors";
 import { numericId, toDateKey } from "../mappers/common";
-import { mapPartnerCar, toApiCarInput } from "../mappers/partner";
+import { mapPartnerCar, mapPartnerReservation, toApiCarInput } from "../mappers/partner";
 import type { PartnerDataRepository } from "./repository";
 
 const toApiStatus = (s?: PartnerCarStatus): CarInput["status"] => (s === "available" ? "active" : s === "unavailable" ? "inactive" : undefined);
@@ -15,16 +15,32 @@ function requireId(id: string): number {
   return n;
 }
 
+function requireReservationId(id: string): number {
+  const n = numericId(id);
+  if (n === null) throw new ServiceError("not_found", "We could not find that reservation.");
+  return n;
+}
+
 export const apiPartnerDataRepository: PartnerDataRepository = {
   async getStats() {
-    const cars = (await guard(() => partnerService.listCars())).map(mapPartnerCar);
+    const [cars, stats, confirmed] = await Promise.all([
+      guard(() => partnerService.listCars()),
+      guard(() => partnerService.getReservationStats()),
+      guard(() => partnerService.listReservations({ status: "confirmed", limit: 100 })),
+    ]);
+    const mapped = cars.map(mapPartnerCar);
+    const now = nowWall();
+    // A car counts as booked today when a confirmed reservation is under way.
+    const underWay = new Set(
+      confirmed.reservations.map(mapPartnerReservation).filter((r) => r.pickupDate <= now && now < r.returnDate).map((r) => r.carId),
+    );
     return {
-      totalCars: cars.length,
-      availableCars: cars.filter((c) => c.status === "available").length,
-      // Reservation figures need a partner reservations endpoint; until then they show a dash.
-      bookedCars: null,
-      upcomingReservations: null,
-      totalReservations: null,
+      totalCars: mapped.length,
+      availableCars: mapped.filter((c) => c.status === "available").length,
+      bookedCars: underWay.size,
+      pendingReservations: stats.pending,
+      upcomingReservations: stats.upcoming,
+      totalReservations: stats.total,
     };
   },
 
@@ -85,11 +101,32 @@ export const apiPartnerDataRepository: PartnerDataRepository = {
     await guard(() => partnerService.setCarAvailability(requireId(carId), dates.map(dateOf), status), "conflict");
   },
 
-  async listReservations() {
-    return unavailable("Your reservations list");
+  async listReservations(_partnerId, filters = {}) {
+    const { reservations } = await guard(() => partnerService.listReservations({ ...filters, limit: 100 }));
+    return reservations.map(mapPartnerReservation);
   },
 
-  async getReservation() {
-    return unavailable("Reservation details");
+  async getReservation(_partnerId, reservationId) {
+    const id = numericId(reservationId);
+    if (id === null) return null;
+    try {
+      return mapPartnerReservation(await guard(() => partnerService.getReservation(id)));
+    } catch (e) {
+      // 404 covers both "does not exist" and "belongs to another partner".
+      if (isServiceError(e) && e.code === "not_found") return null;
+      throw e;
+    }
+  },
+
+  async approveReservation(_partnerId, reservationId) {
+    return mapPartnerReservation(await guard(() => partnerService.approveReservation(requireReservationId(reservationId)), "conflict"));
+  },
+
+  async rejectReservation(_partnerId, reservationId, reason) {
+    return mapPartnerReservation(await guard(() => partnerService.rejectReservation(requireReservationId(reservationId), reason), "conflict"));
+  },
+
+  async completeReservation(_partnerId, reservationId) {
+    return mapPartnerReservation(await guard(() => partnerService.completeReservation(requireReservationId(reservationId)), "conflict"));
   },
 };

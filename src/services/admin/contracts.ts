@@ -1,3 +1,4 @@
+import type { ReservationStatus } from "@/types/reservation";
 import type {
   Admin,
   AdminCarDetail,
@@ -87,10 +88,12 @@ export interface AdminCarRepository {
   deleteCar(id: string): Promise<void>;
 }
 
-/** Read-only on purpose: reservations are managed by customers and partners. No payments or refunds here. */
+/** Admins see every booking and may change its status. The API checks the transition; no payments or refunds here. */
 export interface AdminReservationRepository {
   getReservations(): Promise<AdminReservationView[]>;
   getReservationById(id: string): Promise<AdminReservationDetail | null>;
+  /** Approve, reject, complete or cancel. Rejecting and cancelling need a reason. Returns the updated booking. */
+  setReservationStatus(id: string, status: ReservationStatus, reason?: string): Promise<AdminReservationDetail>;
 }
 
 export interface AdminSettingsRepository {

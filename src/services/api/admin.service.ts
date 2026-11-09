@@ -1,5 +1,5 @@
 import { api, type ApiMeta } from '@/lib/api-client';
-import type { AdminDashboard, Car, PartnerProfile, Reservation, User } from '@/types/api';
+import type { AdminDashboard, Car, PartnerProfile, Reservation, ReservationStatus, User } from '@/types/api';
 
 type Page = { page?: number; limit?: number; status?: string };
 
@@ -24,9 +24,19 @@ export const adminService = {
     return { cars: data.cars, meta };
   },
 
-  async getReservations(p: Page = {}): Promise<{ reservations: Reservation[]; meta?: ApiMeta }> {
+  async getReservations(p: Page & { status?: ReservationStatus; customerId?: number; carId?: number; partnerId?: number; search?: string } = {}): Promise<{ reservations: Reservation[]; meta?: ApiMeta }> {
     const { data, meta } = await api.get<{ reservations: Reservation[] }>('/admin/reservations', p);
     return { reservations: data.reservations, meta };
+  },
+
+  /** One booking with customer, partner and car details and its full status history. */
+  async getReservation(id: number | string): Promise<Reservation> {
+    return (await api.get<{ reservation: Reservation }>(`/admin/reservations/${id}`)).data.reservation;
+  },
+
+  /** The server checks the transition and the role; cancelling and rejecting need a reason. */
+  async setReservationStatus(id: number | string, status: ReservationStatus, reason?: string): Promise<Reservation> {
+    return (await api.patch<{ reservation: Reservation }>(`/admin/reservations/${id}/status`, reason ? { status, reason } : { status })).data.reservation;
   },
 
   async approveCar(id: number): Promise<Car> {

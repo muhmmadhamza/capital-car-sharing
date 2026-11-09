@@ -15,7 +15,7 @@ export const CAR_LIST_STATUS_LABELS: Record<AdminCarListStatus, string> = {
   suspended: "Suspended",
   rejected: "Rejected",
 };
-export const RESERVATION_LABELS: Record<ReservationStatus, string> = { upcoming: "Upcoming", active: "Active", completed: "Completed", cancelled: "Cancelled" };
+export const RESERVATION_LABELS: Record<ReservationStatus, string> = { pending: "Pending", confirmed: "Confirmed", completed: "Completed", cancelled: "Cancelled", rejected: "Rejected" };
 
 export const customerTone = (s: CustomerStatus): Tone => (s === "active" ? "success" : "navy");
 export const partnerTone = (s: PartnerStatus): Tone => (s === "active" ? "success" : s === "pending" ? "gold" : "danger");
@@ -40,7 +40,7 @@ export function carAvailability(car: Pick<AdminCar, "approvalStatus" | "status">
   return car.approvalStatus === "approved" ? car.status : "unavailable";
 }
 export const reservationTone = (s: ReservationStatus): Tone =>
-  s === "active" ? "success" : s === "upcoming" ? "navy" : s === "completed" ? "gold" : "danger";
+  s === "confirmed" ? "success" : s === "pending" ? "gold" : s === "completed" ? "navy" : "danger";
 
 /** Activity statuses come from four different vocabularies; this maps any of them. */
 export function activityStatus(type: ActivityType, status: ActivityStatus): { label: string; tone: Tone } {

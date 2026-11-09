@@ -1,4 +1,4 @@
-import { rentalDays } from "@/lib/date";
+import { nowWall, rentalDays } from "@/lib/date";
 import { tokenStore } from "@/lib/api-client";
 import type { Car as ApiCar, PartnerProfile, Reservation as ApiReservation, User } from "@/types/api";
 import type {
@@ -26,6 +26,7 @@ import { fetchAll } from "../api/paginate";
 import { guard, isServiceError, ServiceError, toLoginError, toServiceError, unavailable } from "../errors";
 import { bodyTypeFromApi, locationFromText, locationsFromCars } from "../mappers/cars";
 import { idOf, orEmpty, paintFor, toWallClock } from "../mappers/common";
+import { mapHistory } from "../mappers/customer";
 import type {
   AdminAuthRepository,
   AdminCarRepository,
@@ -89,12 +90,14 @@ function toReservation(r: ApiReservation): AdminReservation {
     partnerId: idOf(r.partnerId),
     carId: idOf(r.carId),
     pickupLocation: orEmpty(r.pickupLocation),
-    pickupDate: toWallClock(r.pickupDate),
-    returnDate: toWallClock(r.returnDate),
+    pickupDate: toWallClock(r.pickupTime ? `${r.pickupDate.slice(0, 10)}T${r.pickupTime}` : r.pickupDate),
+    returnDate: toWallClock(r.returnTime ? `${r.returnDate.slice(0, 10)}T${r.returnTime}` : r.returnDate),
     status: r.status,
     dailyPrice: r.dailyPrice,
     totalPrice: r.totalPrice,
     createdAt: r.createdAt,
+    bookingReference: r.bookingReference,
+    statusReason: r.statusReason || undefined,
   };
 }
 
@@ -110,12 +113,14 @@ function reservationStats(reservations: ApiReservation[]) {
   const byCustomer = new Map<string, number>();
   const byPartner = new Map<string, number>();
   const rentedNow = new Set<string>();
+  const now = nowWall();
   const bump = (m: Map<string, number>, k: string) => m.set(k, (m.get(k) ?? 0) + 1);
   for (const r of reservations) {
     bump(byCar, idOf(r.carId));
     bump(byCustomer, idOf(r.customerId));
     bump(byPartner, idOf(r.partnerId));
-    if (r.status === "active") rentedNow.add(idOf(r.carId));
+    // Out on a rental: approved, and between pickup and return right now.
+    if (r.status === "confirmed" && toReservation(r).pickupDate <= now && now < toReservation(r).returnDate) rentedNow.add(idOf(r.carId));
   }
   return { byCar, byCustomer, byPartner, rentedNow };
 }
@@ -278,8 +283,11 @@ export const apiAdminDashboard: AdminDashboardRepository = {
         availableCars: carViews.filter((c) => c.approvalStatus === "approved" && c.status === "available").length,
         bookedCars: carViews.filter((c) => c.status === "booked").length,
         totalReservations: reservations.length,
-        upcomingReservations: reservations.filter((r) => r.status === "upcoming").length,
+        pendingReservations: reservations.filter((r) => r.status === "pending").length,
+        confirmedReservations: reservations.filter((r) => r.status === "confirmed").length,
         completedReservations: reservations.filter((r) => r.status === "completed").length,
+        cancelledReservations: reservations.filter((r) => r.status === "cancelled").length,
+        rejectedReservations: reservations.filter((r) => r.status === "rejected").length,
       },
       attention: {
         pendingPartners: partners.filter((p) => p.status === "pending").length,
@@ -370,9 +378,17 @@ export const apiAdminReservations: AdminReservationRepository = {
   },
 
   async getReservationById(id) {
-    const [reservations, customers, partners, cars] = await Promise.all([loadReservations(), loadCustomers(), loadPartners(), loadCars()]);
-    const r = reservations.find((x) => idOf(x.id) === id);
-    if (!r) return null;
+    const numeric = Number(id);
+    if (!Number.isInteger(numeric)) return null;
+    // The detail endpoint carries the status history; customer, partner and car come from the admin lists.
+    let r: ApiReservation;
+    try {
+      r = await guard(() => adminService.getReservation(numeric));
+    } catch (e) {
+      if (isServiceError(e) && e.code === "not_found") return null;
+      throw e;
+    }
+    const [customers, partners, cars] = await Promise.all([loadCustomers(), loadPartners(), loadCars()]);
 
     const user = customers.find((u) => u.id === r.customerId);
     const customer: AdminCustomer = user ? toCustomer(user) : { id: idOf(r.customerId), name: orEmpty(r.customerName), email: orEmpty(r.customerEmail), phone: "", status: "active", createdAt: r.createdAt };
@@ -401,7 +417,25 @@ export const apiAdminReservations: AdminReservationRepository = {
         };
 
     const view = toReservationView(r);
-    return { ...view, customer, partner, car, carLocationName: orEmpty(apiCar?.location ?? r.pickupLocation), days: rentalDays(view.pickupDate, view.returnDate) };
+    return {
+      ...view,
+      customer,
+      partner,
+      car,
+      carLocationName: orEmpty(apiCar?.location ?? r.pickupLocation),
+      days: r.rentalDays ?? rentalDays(view.pickupDate, view.returnDate),
+      history: mapHistory(r.history) ?? [],
+    };
+  },
+
+  async setReservationStatus(id, status, reason) {
+    const numeric = Number(id);
+    if (!Number.isInteger(numeric)) throw new ServiceError("not_found", "We could not find that reservation.");
+    // The server checks the admin role, the transition and the reason; its 409/422 messages are shown as they are.
+    await guard(() => adminService.setReservationStatus(numeric, status, reason), "conflict");
+    const updated = await this.getReservationById(id);
+    if (!updated) throw new ServiceError("not_found", "We could not find that reservation.");
+    return updated;
   },
 };
 

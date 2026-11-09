@@ -1,7 +1,8 @@
-import type { Car as ApiCar, CarInput, PartnerProfile, User } from "@/types/api";
-import type { Partner, PartnerCarInput, PartnerCarStatus, PartnerCarView } from "@/types/partner";
+import type { Car as ApiCar, CarInput, PartnerProfile, Reservation as ApiReservation, User } from "@/types/api";
+import type { Partner, PartnerCarInput, PartnerCarStatus, PartnerCarView, PartnerReservationView } from "@/types/partner";
 import { bodyTypeFromApi, bodyTypeToApi, imagesFromUrls } from "./cars";
-import { idOf, orEmpty, toDateKey } from "./common";
+import { mapHistory } from "./customer";
+import { idOf, orEmpty, toDateKey, toWallClock } from "./common";
 
 /** Partner account from the profile the API returns. */
 export function mapPartner(p: PartnerProfile): Partner {
@@ -89,5 +90,41 @@ export function toApiCarInput(input: PartnerCarInput): CarInput {
     description: input.description.trim(),
     images: input.images.map((i) => i.src).filter((s): s is string => Boolean(s)),
     features: input.features,
+  };
+}
+
+/** A booking on one of the partner's cars, with the customer's contact details the API shares for the handover. */
+export function mapPartnerReservation(r: ApiReservation): PartnerReservationView {
+  const car = `${r.carMake ?? ""} ${r.carModel ?? ""}`.trim();
+  return {
+    id: idOf(r.id),
+    customerId: idOf(r.customerId),
+    partnerId: idOf(r.partnerId),
+    carId: idOf(r.carId),
+    pickupLocation: orEmpty(r.pickupLocation),
+    pickupDate: toWallClock(r.pickupTime ? `${r.pickupDate.slice(0, 10)}T${r.pickupTime}` : r.pickupDate),
+    returnDate: toWallClock(r.returnTime ? `${r.returnDate.slice(0, 10)}T${r.returnTime}` : r.returnDate),
+    status: r.status,
+    dailyPrice: r.dailyPrice,
+    totalPrice: r.totalPrice,
+    bookingReference: r.bookingReference,
+    statusReason: r.statusReason || undefined,
+    createdAt: r.createdAt,
+    customer: { id: idOf(r.customerId), name: orEmpty(r.customerName), email: orEmpty(r.customerEmail), phone: orEmpty(r.customerPhone) },
+    car: {
+      id: idOf(r.carId),
+      make: r.carMake ?? "",
+      model: r.carModel ?? "",
+      year: r.carYear ?? 0,
+      type: bodyTypeFromApi(r.carType ?? ""),
+      location: orEmpty(r.carLocation),
+      images: imagesFromUrls(r.carImage ? [r.carImage] : [], car),
+    },
+    days: r.rentalDays ?? 1,
+    pricing:
+      r.subtotalAmount !== undefined
+        ? { subtotal: r.subtotalAmount, serviceFee: r.serviceFeeAmount ?? 0, tax: r.taxAmount ?? 0, total: r.totalPrice }
+        : undefined,
+    history: mapHistory(r.history),
   };
 }

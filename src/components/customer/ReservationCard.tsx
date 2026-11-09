@@ -23,6 +23,7 @@ export function ReservationCard({ reservation: r }: { reservation: ReservationVi
               <p className="text-sm text-muted">
                 {r.car.year} · {r.car.category}
               </p>
+              {r.bookingReference ? <p className="mt-0.5 font-mono text-xs text-muted">{r.bookingReference}</p> : null}
             </div>
             <StatusBadge status={r.status} />
           </div>

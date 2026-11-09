@@ -2,6 +2,7 @@
 
 import { usePartnerAuth } from "@/components/partner/PartnerAuthProvider";
 import { partnerData } from "@/services/partner";
+import type { PartnerReservationFilters } from "@/types/partner";
 import { useAsync } from "./useAsync";
 
 /** Data hooks for the partner portal. Each one is scoped to the signed-in partner. */
@@ -25,9 +26,10 @@ export function usePartnerCar(carId: string) {
   return useAsync(() => partnerData.getCar(id, carId), [id, carId]);
 }
 
-export function usePartnerReservations() {
+export function usePartnerReservations(filters: PartnerReservationFilters = {}) {
   const id = usePartnerId();
-  return useAsync(() => partnerData.listReservations(id), [id]);
+  const { status, carId, search } = filters;
+  return useAsync(() => partnerData.listReservations(id, { status, carId, search }), [id, status, carId, search]);
 }
 
 export function usePartnerReservation(reservationId: string) {

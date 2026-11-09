@@ -82,7 +82,7 @@ export interface CarAvailability {
   bookedDates: string[];
 }
 
-export type ReservationStatus = 'upcoming' | 'active' | 'completed' | 'cancelled';
+export type ReservationStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'rejected';
 
 export interface Reservation {
   id: number;
@@ -100,6 +100,73 @@ export interface Reservation {
   carMake?: string; carModel?: string; carYear?: number; carType?: string; carImage?: string | null;
   partnerCompanyName?: string;
   customerName?: string; customerEmail?: string;
+  /** Booking fields. Reservations created before the booking module have a reference and 00:00 times too. */
+  bookingReference?: string;
+  /** "HH:mm". `pickupDate` / `returnDate` stay "YYYY-MM-DD". */
+  pickupTime?: string;
+  returnTime?: string;
+  rentalDays?: number;
+  subtotalAmount?: number;
+  serviceFeeAmount?: number;
+  taxAmount?: number;
+  /** Latest reason given for a rejection or cancellation. */
+  statusReason?: string | null;
+  /** Details endpoints only. Names are included for partners and admins, never for customers. */
+  history?: ReservationHistoryEntry[];
+  canCancel?: boolean;
+  /** Admin and partner views. */
+  customerPhone?: string | null;
+  partnerName?: string | null;
+  partnerEmail?: string | null;
+  partnerPhone?: string | null;
+  carLocation?: string | null;
+}
+
+export interface ReservationHistoryEntry {
+  id: number;
+  fromStatus: ReservationStatus | null;
+  toStatus: ReservationStatus;
+  changedByRole: 'customer' | 'partner' | 'admin' | 'system';
+  changedByName?: string | null;
+  reason?: string | null;
+  createdAt: string;
+}
+
+/** What the customer asks for. The server prices it and checks availability; nothing else is read from the request. */
+export interface BookingWindowInput {
+  carId: number;
+  pickupDate: string;
+  pickupTime: string;
+  returnDate: string;
+  returnTime: string;
+}
+
+export interface PriceBreakdown {
+  dailyPrice: number;
+  rentalDays: number;
+  subtotal: number;
+  serviceFee: number;
+  tax: number;
+  total: number;
+  serviceFeePercent: number;
+  taxPercent: number;
+}
+
+/** POST /customers/me/reservations/quote. A conflict or invalid window is an error response, not a quote. */
+export interface ReservationQuote {
+  car: { id: number; make: string; model: string; year: number; location: string };
+  pickupDate: string;
+  pickupTime: string;
+  returnDate: string;
+  returnTime: string;
+  pricing: PriceBreakdown;
+  available: true;
+  eligibility: {
+    canBook: boolean;
+    verificationStatus: 'not_submitted' | 'pending_review' | 'approved' | 'rejected' | 'resubmission_required';
+    /** Why booking is blocked, ready to show. Null when canBook. */
+    message: string | null;
+  };
 }
 
 export interface AdminDashboard {

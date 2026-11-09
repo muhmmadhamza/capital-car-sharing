@@ -7,12 +7,14 @@ import { CarImageView } from "@/components/cars/CarImageView";
 import { Button } from "@/components/ui/Button";
 import { FormAlert } from "@/components/ui/FormField";
 import { CalendarIcon, ChevronLeftIcon, PinIcon } from "@/components/ui/Icons";
-import { canCancel } from "@/features/reservations/status";
+import { canCancel, STATUS_HINTS } from "@/features/reservations/status";
 import { useReservation } from "@/hooks/useReservations";
 import { formatDate, formatIsoDate, formatTime } from "@/lib/date";
 import { cn, formatLocation, formatPrice } from "@/lib/utils";
 import { cancelReservation } from "@/services/reservations";
 import { errorMessage } from "@/services/errors";
+import { StatusHistory } from "@/components/ui/StatusHistory";
+import { PriceBreakdown } from "./PriceBreakdown";
 import { StatusBadge } from "./StatusBadge";
 import { EmptyBlock, ErrorBlock, LoadingBlock, Skeleton, panel } from "./States";
 
@@ -25,21 +27,13 @@ function Section({ title, children, className }: { title: string; children: Reac
   );
 }
 
-function Row({ label, children, strong }: { label: string; children: ReactNode; strong?: boolean }) {
-  return (
-    <div className="flex items-baseline justify-between gap-4 py-2.5 text-sm">
-      <dt className="text-navy-700">{label}</dt>
-      <dd className={cn("text-right text-navy-900", strong ? "font-display text-lg font-semibold" : "font-medium")}>{children}</dd>
-    </div>
-  );
-}
-
 export function ReservationDetails({ id }: { id: string }) {
   const { customer } = useAuth();
   const { data: r, loading, error, reload, setData } = useReservation(id);
   const [confirming, setConfirming] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [cancelError, setCancelError] = useState<string>();
+  const [reason, setReason] = useState("");
 
   const back = (
     <Link href="/customer/reservations" className="mb-5 inline-flex h-10 items-center gap-1 text-sm font-semibold text-navy-900 hover:text-gold-700">
@@ -84,8 +78,9 @@ export function ReservationDetails({ id }: { id: string }) {
     setCancelling(true);
     setCancelError(undefined);
     try {
-      setData(await cancelReservation(r.id, customer.id));
+      setData(await cancelReservation(r.id, customer.id, reason));
       setConfirming(false);
+      setReason("");
     } catch (e) {
       setCancelError(errorMessage(e));
     } finally {
@@ -99,7 +94,10 @@ export function ReservationDetails({ id }: { id: string }) {
 
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="text-sm text-muted">Reservation {r.id.replace("res_", "#")}</p>
+          <p className="text-sm text-muted">
+            Booking reference{" "}
+            <span className="font-mono font-semibold text-navy-900">{r.bookingReference ?? r.id.replace("res_", "#")}</span>
+          </p>
           <h1 className="text-2xl font-semibold tracking-tight text-navy-900 sm:text-3xl">{name}</h1>
         </div>
         <StatusBadge status={r.status} className="self-start" />
@@ -186,16 +184,14 @@ export function ReservationDetails({ id }: { id: string }) {
 
         <div className="space-y-5">
           <Section title="Price breakdown">
-            <dl className="divide-y divide-navy-900/10">
-              <Row label="Rental duration">
-                {r.days} {r.days === 1 ? "day" : "days"}
-              </Row>
-              <Row label="Daily price">{formatPrice(r.dailyPrice)}</Row>
-              <Row label={`${formatPrice(r.dailyPrice)} × ${r.days}`}>{formatPrice(r.totalPrice)}</Row>
-              <Row label="Total" strong>
-                {formatPrice(r.totalPrice)}
-              </Row>
-            </dl>
+            <PriceBreakdown
+              days={r.days}
+              dailyPrice={r.dailyPrice}
+              subtotal={r.pricing?.subtotal ?? r.totalPrice}
+              serviceFee={r.pricing?.serviceFee ?? 0}
+              tax={r.pricing?.tax ?? 0}
+              total={r.totalPrice}
+            />
             <p className="mt-3 text-xs leading-relaxed text-muted">
               {r.car.depositAmount !== undefined ? `A refundable security deposit of ${formatPrice(r.car.depositAmount)} applies at pickup. ` : ""}Payments are not connected yet, so nothing has been charged.
             </p>
@@ -206,6 +202,13 @@ export function ReservationDetails({ id }: { id: string }) {
               <StatusBadge status={r.status} />
               {r.status === "cancelled" && r.cancelledAt ? <span className="text-xs text-muted">on {formatIsoDate(r.cancelledAt)}</span> : null}
             </div>
+            <p className="mt-3 text-sm leading-relaxed text-muted">{STATUS_HINTS[r.status]}</p>
+            {r.statusReason && (r.status === "rejected" || r.status === "cancelled") ? (
+              <p className="mt-3 rounded-lg border border-navy-900/10 bg-navy-900/[0.04] px-3 py-2 text-sm text-navy-900">
+                <span className="block text-xs font-medium text-muted">Reason</span>
+                {r.statusReason}
+              </p>
+            ) : null}
 
             {canCancel(r) ? (
               <div className="mt-5">
@@ -216,6 +219,17 @@ export function ReservationDetails({ id }: { id: string }) {
                       Cancel this reservation?
                     </p>
                     <p className="mt-1 text-xs leading-relaxed text-[#8E1D17]/90">This cannot be undone. The car will be released for other customers.</p>
+                    <label htmlFor="cancel-reason" className="mt-3 block text-xs font-medium text-[#8E1D17]">
+                      Reason (optional)
+                    </label>
+                    <textarea
+                      id="cancel-reason"
+                      value={reason}
+                      onChange={(e) => setReason(e.target.value)}
+                      maxLength={500}
+                      rows={2}
+                      className="mt-1 w-full rounded-lg border border-[#B3261E]/30 bg-white px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-gold-500/60"
+                    />
                     <div className="mt-3 flex flex-col gap-2 sm:flex-row xl:flex-col">
                       <button
                         type="button"
@@ -241,6 +255,10 @@ export function ReservationDetails({ id }: { id: string }) {
                 )}
               </div>
             ) : null}
+          </Section>
+
+          <Section title="History">
+            <StatusHistory entries={r.history} />
           </Section>
         </div>
       </div>

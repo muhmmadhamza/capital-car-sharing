@@ -6,7 +6,13 @@ import { StatusBadge } from "@/components/customer/StatusBadge";
 import { EmptyBlock, ErrorBlock, LoadingBlock, Skeleton, panel } from "@/components/customer/States";
 import { Button } from "@/components/ui/Button";
 import { CalendarIcon, ChevronLeftIcon, MailIcon, PhoneIcon, PinIcon } from "@/components/ui/Icons";
+import { StatusActions } from "@/components/ui/StatusActions";
+import { StatusHistory } from "@/components/ui/StatusHistory";
+import { STATUS_HINTS, partnerActions } from "@/features/reservations/status";
 import { usePartnerReservation } from "@/hooks/usePartnerData";
+import { usePartnerAuth } from "@/components/partner/PartnerAuthProvider";
+import { partnerData } from "@/services/partner";
+import type { ReservationStatus } from "@/types/reservation";
 import { formatDate, formatTime } from "@/lib/date";
 import { BODY_TYPE_LABELS } from "@/types/car";
 import { cn, formatPrice } from "@/lib/utils";
@@ -31,7 +37,20 @@ function Row({ label, children, strong }: { label: string; children: ReactNode; 
 }
 
 export function PartnerReservationDetails({ id }: { id: string }) {
-  const { data: r, loading, error, reload } = usePartnerReservation(id);
+  const { data: r, loading, error, reload, setData } = usePartnerReservation(id);
+  const { partner } = usePartnerAuth();
+
+  async function act(to: ReservationStatus, reason?: string) {
+    if (!r || !partner) return;
+    // The API takes the partner from the session and checks the car belongs to them; the id here is not trusted.
+    const next =
+      to === "confirmed"
+        ? await partnerData.approveReservation(partner.id, r.id)
+        : to === "rejected"
+          ? await partnerData.rejectReservation(partner.id, r.id, reason ?? "")
+          : await partnerData.completeReservation(partner.id, r.id);
+    setData(next);
+  }
 
   const back = (
     <Link href="/partner/reservations" className="mb-5 inline-flex h-10 items-center gap-1 text-sm font-semibold text-navy-900 hover:text-gold-700">
@@ -64,7 +83,9 @@ export function PartnerReservationDetails({ id }: { id: string }) {
 
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="text-sm text-muted">Reservation {r.id.replace("pres_", "#")}</p>
+          <p className="text-sm text-muted">
+            Booking reference <span className="font-mono font-semibold text-navy-900">{r.bookingReference ?? `#${r.id}`}</span>
+          </p>
           <h1 className="text-2xl font-semibold tracking-tight text-navy-900 sm:text-3xl">{carName(r.car)}</h1>
         </div>
         <StatusBadge status={r.status} className="self-start" />
@@ -104,7 +125,7 @@ export function PartnerReservationDetails({ id }: { id: string }) {
                 <h2 className="text-base font-semibold text-navy-900">Vehicle</h2>
                 <p className="mt-2 text-lg font-semibold text-navy-900">{carName(r.car)}</p>
                 <p className="text-sm text-muted">
-                  {r.car.year} · {BODY_TYPE_LABELS[r.car.type]} · {r.car.transmission} · {r.car.fuelType}
+                  {r.car.year} · {BODY_TYPE_LABELS[r.car.type]}{r.car.location ? ` · ${r.car.location}` : ""}
                 </p>
                 <Link href={`/partner/cars/${r.car.id}`} className="mt-3 inline-block text-sm font-semibold text-navy-900 underline underline-offset-2 hover:text-gold-700">
                   View car
@@ -153,6 +174,13 @@ export function PartnerReservationDetails({ id }: { id: string }) {
               <Row label="Rental duration">
                 {r.days} {r.days === 1 ? "day" : "days"}
               </Row>
+              {r.pricing && (r.pricing.serviceFee > 0 || r.pricing.tax > 0) ? (
+                <>
+                  <Row label="Subtotal">{formatPrice(r.pricing.subtotal)}</Row>
+                  {r.pricing.serviceFee > 0 ? <Row label="Service fee">{formatPrice(r.pricing.serviceFee)}</Row> : null}
+                  {r.pricing.tax > 0 ? <Row label="Tax">{formatPrice(r.pricing.tax)}</Row> : null}
+                </>
+              ) : null}
               <Row label="Total amount" strong>
                 {formatPrice(r.totalPrice)}
               </Row>
@@ -162,15 +190,24 @@ export function PartnerReservationDetails({ id }: { id: string }) {
 
           <Section title="Status">
             <StatusBadge status={r.status} />
-            <p className="mt-3 text-xs leading-relaxed text-muted">
-              {r.status === "upcoming"
-                ? "The car is held for these dates and shows as booked on your calendar."
-                : r.status === "active"
-                  ? "The car is out on this rental right now."
-                  : r.status === "completed"
-                    ? "This rental has finished."
-                    : "This reservation was cancelled, so the dates are free again."}
-            </p>
+            <p className="mt-3 text-xs leading-relaxed text-muted">{STATUS_HINTS[r.status]}</p>
+            {r.statusReason ? (
+              <p className="mt-3 rounded-lg border border-navy-900/10 bg-navy-900/[0.04] px-3 py-2 text-sm text-navy-900">
+                <span className="block text-xs font-medium text-muted">Reason</span>
+                {r.statusReason}
+              </p>
+            ) : null}
+            <div className="mt-4">
+              <StatusActions
+                actions={partnerActions(r.status)}
+                onAct={act}
+                note={r.status === "confirmed" || r.status === "pending" ? undefined : "No further action is needed."}
+              />
+            </div>
+          </Section>
+
+          <Section title="History">
+            <StatusHistory entries={r.history} />
           </Section>
         </div>
       </div>

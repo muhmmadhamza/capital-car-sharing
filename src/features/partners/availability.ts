@@ -4,8 +4,8 @@ import type { Availability, CarDayStatus, PartnerCarStatus, PartnerReservation }
 
 type Span = Pick<PartnerReservation, "carId" | "pickupDate" | "returnDate" | "status">;
 
-/** Reservations that occupy the car. Completed and cancelled ones free it up. */
-const OCCUPYING = new Set<PartnerReservation["status"]>(["upcoming", "active"]);
+/** Reservations that occupy the car. Completed, cancelled and rejected ones free it up. */
+const OCCUPYING = new Set<PartnerReservation["status"]>(["pending", "confirmed"]);
 
 /**
  * Every calendar day a car is out on a reservation, counting the pickup day and
@@ -35,9 +35,9 @@ export function monthAvailability(carId: string, month: DateKey, booked: Set<Dat
   });
 }
 
-/** A car is "booked" only while a reservation is active; otherwise its stored status stands. */
+/** A car is "booked" only while a confirmed reservation is under way; otherwise its stored status stands. */
 export function effectiveStatus(stored: PartnerCarStatus, reservations: Span[], carId: string, now: WallClock = nowWall()): PartnerCarStatus {
   if (stored === "pending") return "pending";
-  const out = reservations.some((r) => r.carId === carId && r.status === "active" && r.pickupDate <= now && now < r.returnDate);
+  const out = reservations.some((r) => r.carId === carId && r.status === "confirmed" && r.pickupDate <= now && now < r.returnDate);
   return out ? "booked" : stored;
 }

@@ -1,7 +1,8 @@
 import type { WallClock } from "./booking";
 import type { Car, Location } from "./car";
 
-export type ReservationStatus = "upcoming" | "active" | "completed" | "cancelled";
+/** Booking workflow: pending (awaiting the partner) -> confirmed -> completed; or rejected / cancelled. */
+export type ReservationStatus = "pending" | "confirmed" | "completed" | "cancelled" | "rejected";
 
 /** Matches the `reservations` table. */
 export interface Reservation {
@@ -19,6 +20,37 @@ export interface Reservation {
   totalPrice: number;
   /** ISO 8601. Set when status becomes "cancelled". */
   cancelledAt?: string;
+  /** Unique, human-friendly reference, e.g. "CCS-261108-K7M2X". Quote it to support. */
+  bookingReference?: string;
+  /** Billable days as the server counted them. */
+  rentalDays?: number;
+  /** Price breakdown as stored at booking time. `total` equals `totalPrice`. */
+  pricing?: ReservationPricing;
+  /** Why the booking was rejected or cancelled, when someone gave a reason. */
+  statusReason?: string;
+  /** Status changes, oldest first. Only on the details endpoints. */
+  history?: StatusHistoryEntry[];
+  /** Whether the customer may cancel it right now (the API decides). */
+  canCancel?: boolean;
+}
+
+export interface StatusHistoryEntry {
+  id: string;
+  fromStatus: ReservationStatus | null;
+  toStatus: ReservationStatus;
+  changedByRole: "customer" | "partner" | "admin" | "system";
+  /** Only shown to partners and admins. */
+  changedByName?: string;
+  reason?: string;
+  /** ISO 8601. */
+  at: string;
+}
+
+export interface ReservationPricing {
+  subtotal: number;
+  serviceFee: number;
+  tax: number;
+  total: number;
 }
 
 /** A reservation joined with what the screens need to draw it. */
@@ -30,8 +62,9 @@ export interface ReservationView extends Reservation {
 
 export interface ReservationSummary {
   total: number;
-  upcoming: number;
-  active: number;
+  pending: number;
+  confirmed: number;
   completed: number;
   cancelled: number;
+  rejected: number;
 }

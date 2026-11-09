@@ -27,14 +27,14 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 export function CarDetailsView({ id }: { id: string }) {
   const router = useRouter();
   const { data: car, loading, error, reload } = usePartnerCar(id);
-  const reservations = usePartnerReservations();
+  const reservations = usePartnerReservations({ carId: id });
   const [active, setActive] = useState(0);
   const [deleting, setDeleting] = useState(false);
 
   const mine = useMemo(
     () =>
       (reservations.data ?? [])
-        .filter((r) => r.carId === id && (r.status === "upcoming" || r.status === "active"))
+        .filter((r) => r.carId === id && (r.status === "pending" || r.status === "confirmed"))
         .sort((a, b) => a.pickupDate.localeCompare(b.pickupDate)),
     [reservations.data, id],
   );

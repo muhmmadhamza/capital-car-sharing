@@ -85,8 +85,10 @@ export function DashboardView() {
             <StatCard label="Available Cars" value={data.stats.availableCars} icon={CheckIcon} hint="Approved and open for rent" />
             <StatCard label="Booked Cars" value={data.stats.bookedCars} icon={CarIcon} hint="Out on a rental right now" />
             <StatCard label="Total Reservations" value={data.stats.totalReservations} icon={ListIcon} />
-            <StatCard label="Upcoming Reservations" value={data.stats.upcomingReservations} icon={CalendarIcon} />
-            <StatCard label="Completed Reservations" value={data.stats.completedReservations} icon={CheckIcon} />
+            <StatCard label="Pending Reservations" value={data.stats.pendingReservations} icon={CalendarIcon} href="/admin/reservations?status=pending" hint="Waiting for a partner's decision" />
+            <StatCard label="Confirmed Reservations" value={data.stats.confirmedReservations} icon={CheckIcon} href="/admin/reservations?status=confirmed" />
+            <StatCard label="Completed Reservations" value={data.stats.completedReservations} icon={CheckIcon} href="/admin/reservations?status=completed" />
+            <StatCard label="Cancelled / Rejected" value={data.stats.cancelledReservations + data.stats.rejectedReservations} icon={ListIcon} hint={`${data.stats.cancelledReservations} cancelled · ${data.stats.rejectedReservations} rejected`} />
           </section>
 
           <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">

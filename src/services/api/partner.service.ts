@@ -1,7 +1,39 @@
 import { api } from '@/lib/api-client';
-import type { Car, CarAvailability, CarInput, PartnerProfile } from '@/types/api';
+import type { ApiMeta } from '@/lib/api-client';
+import type { Car, CarAvailability, CarInput, PartnerProfile, Reservation, ReservationStatus } from '@/types/api';
 
 export const partnerService = {
+  /** Bookings on the partner's own cars. The server scopes this to the signed-in partner. */
+  async listReservations(params: { status?: ReservationStatus; carId?: string; search?: string; limit?: number } = {}): Promise<{ reservations: Reservation[]; meta?: ApiMeta }> {
+    const { data, meta } = await api.get<{ reservations: Reservation[] }>('/partners/me/reservations', params);
+    return { reservations: data.reservations, meta };
+  },
+
+  async getReservationStats(): Promise<{ total: number; pending: number; confirmed: number; completed: number; cancelled: number; rejected: number; upcoming: number }> {
+    const { data } = await api.get<{ stats: { total: number; pending: number; confirmed: number; completed: number; cancelled: number; rejected: number; upcoming: number } }>('/partners/me/reservations/stats');
+    return data.stats;
+  },
+
+  async getReservation(id: number | string): Promise<Reservation> {
+    const { data } = await api.get<{ reservation: Reservation }>(`/partners/me/reservations/${id}`);
+    return data.reservation;
+  },
+
+  async approveReservation(id: number | string): Promise<Reservation> {
+    const { data } = await api.patch<{ reservation: Reservation }>(`/partners/me/reservations/${id}/approve`, {});
+    return data.reservation;
+  },
+
+  async rejectReservation(id: number | string, reason: string): Promise<Reservation> {
+    const { data } = await api.patch<{ reservation: Reservation }>(`/partners/me/reservations/${id}/reject`, { reason });
+    return data.reservation;
+  },
+
+  async completeReservation(id: number | string): Promise<Reservation> {
+    const { data } = await api.patch<{ reservation: Reservation }>(`/partners/me/reservations/${id}/complete`, {});
+    return data.reservation;
+  },
+
   async getProfile(): Promise<PartnerProfile> {
     const { data } = await api.get<{ partner: PartnerProfile }>('/partners/me');
     return data.partner;

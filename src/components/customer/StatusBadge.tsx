@@ -4,17 +4,19 @@ import type { ReservationStatus } from "@/types/reservation";
 
 /** Same pill shape and palette as AvailabilityBadge, so statuses look alike everywhere. */
 const styles: Record<ReservationStatus, string> = {
-  upcoming: "border-navy-700/25 bg-navy-900/[0.06] text-navy-900",
-  active: "border-[#1E6B45]/25 bg-[#E7F4EC] text-[#14543A]",
-  completed: "border-gold-700/30 bg-gold-500/15 text-navy-900",
+  pending: "border-gold-700/30 bg-gold-500/15 text-navy-900",
+  confirmed: "border-[#1E6B45]/25 bg-[#E7F4EC] text-[#14543A]",
+  completed: "border-navy-700/25 bg-navy-900/[0.06] text-navy-900",
   cancelled: "border-[#B3261E]/25 bg-[#FBEAE9] text-[#8E1D17]",
+  rejected: "border-[#B3261E]/25 bg-[#FBEAE9] text-[#8E1D17]",
 };
 
 const dots: Record<ReservationStatus, string> = {
-  upcoming: "bg-navy-700",
-  active: "bg-[#1E6B45]",
-  completed: "bg-gold-700",
+  pending: "bg-gold-700",
+  confirmed: "bg-[#1E6B45]",
+  completed: "bg-navy-700",
   cancelled: "bg-[#B3261E]",
+  rejected: "bg-[#B3261E]",
 };
 
 export function StatusBadge({ status, className }: { status: ReservationStatus; className?: string }) {

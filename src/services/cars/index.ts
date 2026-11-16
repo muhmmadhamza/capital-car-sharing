@@ -61,6 +61,16 @@ export async function searchCars(query: CarSearchQuery): Promise<CarListing[]> {
 
 /** One car with everything the details page and calendar need. Returns null when there is no such car. */
 export async function getCarDetail(slug: string, window?: RentalWindow): Promise<CarDetail | null> {
+  try {
+    return await loadCarDetail(slug, window);
+  } catch (e) {
+    // Production hides server errors from the browser; this keeps the real cause in the server log.
+    console.error(`[cars] could not load car "${slug}":`, e);
+    throw e;
+  }
+}
+
+async function loadCarDetail(slug: string, window?: RentalWindow): Promise<CarDetail | null> {
   const car = await repository.getCarBySlug(slug);
   if (!car) return null;
   const now = nowWall();

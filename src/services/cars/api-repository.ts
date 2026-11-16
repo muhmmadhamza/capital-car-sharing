@@ -12,6 +12,8 @@ import type { CarsRepository } from "./repository";
 
 /** How many availability requests run at once, so a long listing does not flood the API. */
 const CONCURRENCY = 6;
+/** Longest date range sent to the availability endpoint in one request (what the listing page already uses). */
+const WINDOW_DAYS = 60;
 
 async function mapPool<T, R>(items: T[], worker: (item: T) => Promise<R>): Promise<R[]> {
   const results: R[] = new Array(items.length);
@@ -91,11 +93,22 @@ export const apiCarsRepository: CarsRepository = {
   async getBlocks(carIds, from, horizonDays) {
     const startDate = dateOf(from);
     const endDate = addDays(startDate, horizonDays);
+    // The availability endpoint is asked for at most WINDOW_DAYS at a time. The details page looks a year ahead,
+    // which one request may be too long for; several short requests are merged into one answer instead.
+    const windows: { startDate: string; endDate: string }[] = [];
+    for (let s = startDate; s < endDate; s = addDays(s, WINDOW_DAYS)) {
+      const e = addDays(s, WINDOW_DAYS);
+      windows.push({ startDate: s, endDate: e < endDate ? e : endDate });
+    }
     const lists = await mapPool(carIds, async (carId): Promise<BookingBlock[]> => {
       const id = numericId(carId);
       if (id === null) return [];
-      const availability = await guard(() => carsService.getAvailability(id, { startDate, endDate }));
-      return availabilityToBlocks(carId, availability).filter((b) => b.end > from);
+      const parts = await mapPool(windows, (range) => guard(() => carsService.getAvailability(id, range)));
+      const merged = {
+        bookedDates: parts.flatMap((a) => a.bookedDates ?? []),
+        unavailableDates: parts.flatMap((a) => a.unavailableDates ?? []),
+      };
+      return availabilityToBlocks(carId, merged).filter((b) => b.end > from);
     });
     return lists.flat();
   },

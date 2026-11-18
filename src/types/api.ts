@@ -69,6 +69,8 @@ export interface CarSearchFilters {
   location?: string; pickupDate?: string; returnDate?: string; carType?: string;
   minPrice?: number; maxPrice?: number; seats?: number; transmission?: string; fuelType?: string;
   sort?: 'newest' | 'price_asc' | 'price_desc' | 'year_desc'; page?: number; limit?: number;
+  /** 'advance': the API checks the dates qualify for an advance reservation and leaves out cars that are taken. */
+  bookingType?: 'advance';
 }
 
 export interface CarAvailability {
@@ -83,6 +85,9 @@ export interface CarAvailability {
 }
 
 export type ReservationStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'rejected';
+
+/** 'advance' = pickup was at least the minimum lead time (24 h by default) after booking. Decided by the server. */
+export type BookingType = 'standard' | 'advance';
 
 export interface Reservation {
   id: number;
@@ -105,6 +110,8 @@ export interface Reservation {
   /** "HH:mm". `pickupDate` / `returnDate` stay "YYYY-MM-DD". */
   pickupTime?: string;
   returnTime?: string;
+  /** Older API versions do not send it; treat a missing value as 'standard'. */
+  bookingType?: BookingType;
   rentalDays?: number;
   subtotalAmount?: number;
   serviceFeeAmount?: number;
@@ -139,6 +146,8 @@ export interface BookingWindowInput {
   pickupTime: string;
   returnDate: string;
   returnTime: string;
+  /** Only ever 'advance': "refuse unless this really is an advance reservation". The server decides the stored type. */
+  bookingType?: 'advance';
 }
 
 export interface PriceBreakdown {
@@ -161,6 +170,11 @@ export interface ReservationQuote {
   returnTime: string;
   pricing: PriceBreakdown;
   available: true;
+  /** What a reservation for this window will be stored as. */
+  bookingType?: BookingType;
+  /** Whole hours between now and pickup. */
+  leadHours?: number;
+  advanceMinHours?: number;
   eligibility: {
     canBook: boolean;
     verificationStatus: 'not_submitted' | 'pending_review' | 'approved' | 'rejected' | 'resubmission_required';

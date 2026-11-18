@@ -28,8 +28,8 @@ export function usePartnerCar(carId: string) {
 
 export function usePartnerReservations(filters: PartnerReservationFilters = {}) {
   const id = usePartnerId();
-  const { status, carId, search } = filters;
-  return useAsync(() => partnerData.listReservations(id, { status, carId, search }), [id, status, carId, search]);
+  const { status, carId, search, bookingType } = filters;
+  return useAsync(() => partnerData.listReservations(id, { status, carId, search, bookingType }), [id, status, carId, search, bookingType]);
 }
 
 export function usePartnerReservation(reservationId: string) {

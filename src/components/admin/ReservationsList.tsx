@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AdvanceBadge } from "@/components/customer/AdvanceBadge";
 import { RESERVATION_LABELS, reservationTone } from "@/features/admin/status";
 import { formatDateTime } from "@/lib/date";
 import { formatPrice } from "@/lib/utils";
@@ -55,7 +56,10 @@ export function ReservationsList({ reservations, show }: { reservations: AdminRe
                 <td className={td}>{formatDateTime(r.returnDate)}</td>
                 <td className={`${td} font-semibold`}>{formatPrice(r.totalPrice)}</td>
                 <td className={td}>
-                  <StatusPill tone={reservationTone(r.status)}>{RESERVATION_LABELS[r.status]}</StatusPill>
+                  <div className="flex flex-col items-start gap-1.5">
+                    <StatusPill tone={reservationTone(r.status)}>{RESERVATION_LABELS[r.status]}</StatusPill>
+                    <AdvanceBadge bookingType={r.bookingType} />
+                  </div>
                 </td>
               </tr>
             ))}
@@ -71,7 +75,10 @@ export function ReservationsList({ reservations, show }: { reservations: AdminRe
                 <p className="truncate font-semibold text-navy-900">{r.carName}</p>
                 <Link href={`/admin/reservations/${r.id}`} className="font-mono text-xs text-muted hover:text-gold-700">{r.id}</Link>
               </div>
-              <StatusPill tone={reservationTone(r.status)}>{RESERVATION_LABELS[r.status]}</StatusPill>
+              <div className="flex flex-col items-end gap-1.5">
+                <StatusPill tone={reservationTone(r.status)}>{RESERVATION_LABELS[r.status]}</StatusPill>
+                <AdvanceBadge bookingType={r.bookingType} />
+              </div>
             </div>
             <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 text-sm sm:grid-cols-3">
               <Meta label={whoLabel} value={<Link href={whoHref(r)} className="hover:text-gold-700">{who(r)}</Link>} />

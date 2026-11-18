@@ -53,17 +53,23 @@ export function DashboardView() {
                 ? `You have ${summary.confirmed} confirmed ${summary.confirmed === 1 ? "reservation" : "reservations"}.`
                 : "Ready for your next trip? Pick a car and your dates."}
           </p>
-          <Button href="/cars" className="mt-5">
-            Browse cars <ArrowRightIcon width={16} height={16} />
-          </Button>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <Button href="/cars">
+              Browse cars <ArrowRightIcon width={16} height={16} />
+            </Button>
+            <Button href="/customer/advance" variant="outline-light">
+              Reserve ahead
+            </Button>
+          </div>
         </div>
       </section>
 
       <VerificationBanner />
 
-      <section aria-label="Reservation summary" className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <section aria-label="Reservation summary" className="grid grid-cols-2 gap-4 lg:grid-cols-5">
         <StatCard label="Total reservations" value={summary?.total} tone="bg-navy-900" />
         <StatCard label="Upcoming" value={summary ? summary.pending + summary.confirmed : undefined} hint={summary?.pending ? `${summary.pending} awaiting approval` : undefined} tone="bg-gold-500" />
+        <StatCard label="Advance" value={summary?.advance} hint="booked ahead of time" tone="bg-navy-700" />
         <StatCard label="Completed" value={summary?.completed} tone="bg-[#1E6B45]" />
         <StatCard label="Cancelled" value={summary?.cancelled} tone="bg-[#B3261E]" />
       </section>

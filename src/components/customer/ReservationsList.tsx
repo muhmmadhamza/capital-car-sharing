@@ -9,7 +9,8 @@ import type { ReservationStatus } from "@/types/reservation";
 import { ReservationCard } from "./ReservationCard";
 import { EmptyBlock, ErrorBlock, LoadingBlock, PageHeader } from "./States";
 
-type Filter = "all" | ReservationStatus;
+/** "advance" is the booking type, not a status: advance reservations of any status. */
+type Filter = "all" | "advance" | ReservationStatus;
 
 export function ReservationsList() {
   const { data, loading, error, reload } = useReservations();
@@ -17,7 +18,7 @@ export function ReservationsList() {
   const summary = useMemo(() => (data ? summarize(data) : undefined), [data]);
 
   const visible = useMemo(() => {
-    const list = (data ?? []).filter((r) => filter === "all" || r.status === filter);
+    const list = (data ?? []).filter((r) => filter === "all" || (filter === "advance" ? r.bookingType === "advance" : r.status === filter));
     // Trips still to come read best soonest-first; history reads best newest-first.
     const rank = { confirmed: 0, pending: 1, completed: 2, cancelled: 3, rejected: 4 } as const;
     return [...list].sort((a, b) => {
@@ -28,12 +29,13 @@ export function ReservationsList() {
 
   const tabs: { id: Filter; label: string; count: number | undefined }[] = [
     { id: "all", label: "All", count: summary?.total },
+    { id: "advance", label: "Advance", count: summary?.advance },
     ...STATUS_ORDER.map((s) => ({ id: s, label: STATUS_LABELS[s], count: summary?.[s] })),
   ];
 
   return (
     <div>
-      <PageHeader title="My Reservations" description="Every trip you have booked, with its dates, price and status." />
+      <PageHeader title="My Reservations" description="Every trip you have booked, with its dates, price and status. Trips booked well ahead are marked Advance." />
 
       <div role="tablist" aria-label="Filter reservations" className="mb-5 flex gap-2 overflow-x-auto pb-1">
         {tabs.map((t) => (
@@ -65,9 +67,9 @@ export function ReservationsList() {
           <LoadingBlock label="Loading your reservations" />
         ) : visible.length === 0 ? (
           <EmptyBlock
-            title={filter === "all" ? "No reservations yet" : `No ${STATUS_LABELS[filter as ReservationStatus].toLowerCase()} reservations`}
-            text={filter === "all" ? "Once you reserve a car, your trips will show up here." : "Nothing matches this filter right now."}
-            action={filter === "all" ? <Button href="/cars">Find a car</Button> : <Button variant="outline-navy" onClick={() => setFilter("all")}>Show all</Button>}
+            title={filter === "all" ? "No reservations yet" : filter === "advance" ? "No advance reservations" : `No ${STATUS_LABELS[filter].toLowerCase()} reservations`}
+            text={filter === "all" ? "Once you reserve a car, your trips will show up here." : filter === "advance" ? "Plan a trip ahead of time and it will show up here." : "Nothing matches this filter right now."}
+            action={filter === "all" ? <Button href="/cars">Find a car</Button> : filter === "advance" ? <Button href="/customer/advance">Reserve ahead</Button> : <Button variant="outline-navy" onClick={() => setFilter("all")}>Show all</Button>}
           />
         ) : (
           <div className="space-y-4">

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { AdvanceBadge } from "@/components/customer/AdvanceBadge";
 import { StatusBadge } from "@/components/customer/StatusBadge";
 import { EmptyBlock, ErrorBlock, LoadingBlock, PageHeader, panel } from "@/components/customer/States";
 import { Button } from "@/components/ui/Button";
@@ -13,11 +14,12 @@ import { usePartnerCars, usePartnerReservations } from "@/hooks/usePartnerData";
 import { dateOf, formatDateTime } from "@/lib/date";
 import { formatPrice } from "@/lib/utils";
 import type { PartnerReservationView } from "@/types/partner";
+import type { BookingType } from "@/types/booking";
 import type { ReservationStatus } from "@/types/reservation";
 import { carName } from "./parts";
 
-type Filters = { status: ReservationStatus | "all"; carId: string; date: string; search: string };
-const NO_FILTERS: Filters = { status: "all", carId: "all", date: "", search: "" };
+type Filters = { status: ReservationStatus | "all"; carId: string; date: string; search: string; type: BookingType | "all" };
+const NO_FILTERS: Filters = { status: "all", carId: "all", date: "", search: "", type: "all" };
 
 /** A reservation matches a date when the car is out on that day (pickup day to return day). */
 const coversDate = (r: PartnerReservationView, date: string) => dateOf(r.pickupDate) <= date && date <= dateOf(r.returnDate);
@@ -31,7 +33,10 @@ function Card({ r }: { r: PartnerReservationView }) {
           <p className="truncate text-sm text-navy-700">{r.customer.name}</p>
           {r.bookingReference ? <p className="mt-0.5 font-mono text-xs text-muted">{r.bookingReference}</p> : null}
         </div>
-        <StatusBadge status={r.status} />
+        <div className="flex flex-col items-end gap-1.5">
+          <StatusBadge status={r.status} />
+          <AdvanceBadge bookingType={r.bookingType} />
+        </div>
       </div>
       <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
         <div>
@@ -109,7 +114,10 @@ function Table({ rows }: { rows: PartnerReservationView[] }) {
               <td className="whitespace-nowrap px-4 py-3.5 text-right text-navy-900">{formatPrice(r.dailyPrice)}</td>
               <td className="whitespace-nowrap px-4 py-3.5 text-right font-semibold text-navy-900">{formatPrice(r.totalPrice)}</td>
               <td className="px-4 py-3.5">
-                <StatusBadge status={r.status} />
+                <div className="flex flex-col items-start gap-1.5">
+                  <StatusBadge status={r.status} />
+                  <AdvanceBadge bookingType={r.bookingType} />
+                </div>
               </td>
               <td className="px-4 py-3.5 text-right">
                 <Link href={`/partner/reservations/${r.id}`} className="whitespace-nowrap font-semibold text-navy-900 underline underline-offset-2 hover:text-gold-700">
@@ -132,12 +140,13 @@ export function PartnerReservationsView() {
     status: filters.status === "all" ? undefined : filters.status,
     carId: filters.carId === "all" ? undefined : filters.carId,
     search: filters.search || undefined,
+    bookingType: filters.type === "all" ? undefined : filters.type,
   });
   const { data: myCars } = usePartnerCars();
   const cars = useMemo(() => (myCars ?? []).map((c): [string, string] => [c.id, `${carName(c)} (${c.year})`]), [myCars]);
 
   const rows = useMemo(() => (data ?? []).filter((r) => !filters.date || coversDate(r, filters.date)), [data, filters.date]);
-  const filtered = filters.status !== "all" || filters.carId !== "all" || filters.date !== "" || filters.search !== "";
+  const filtered = filters.status !== "all" || filters.carId !== "all" || filters.date !== "" || filters.search !== "" || filters.type !== "all";
   const clear = () => { setFilters(NO_FILTERS); setSearchText(""); };
   const pendingCount = (data ?? []).filter((r) => r.status === "pending").length;
 
@@ -160,7 +169,7 @@ export function PartnerReservationsView() {
             <FormField label="Search" value={searchText} onChange={(e) => setSearchText(e.target.value)} placeholder="Reference, customer or car" className="sm:flex-1" />
             <Button type="submit" variant="navy" className="sm:mt-[1.65rem]">Search</Button>
           </form>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:items-end">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5 lg:items-end">
             <SelectField label="Status" value={filters.status} onChange={(e) => setFilters((f) => ({ ...f, status: e.target.value as Filters["status"] }))}>
               <option value="all">All statuses</option>
               {STATUS_ORDER.map((s) => (
@@ -168,6 +177,11 @@ export function PartnerReservationsView() {
                   {STATUS_LABELS[s]}
                 </option>
               ))}
+            </SelectField>
+            <SelectField label="Booking type" value={filters.type} onChange={(e) => setFilters((f) => ({ ...f, type: e.target.value as Filters["type"] }))}>
+              <option value="all">All bookings</option>
+              <option value="advance">Advance reservations</option>
+              <option value="standard">Standard</option>
             </SelectField>
             <SelectField label="Car" value={filters.carId} onChange={(e) => setFilters((f) => ({ ...f, carId: e.target.value }))}>
               <option value="all">All cars</option>

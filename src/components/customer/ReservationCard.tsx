@@ -4,6 +4,7 @@ import { CalendarIcon, ChevronRightIcon, PinIcon } from "@/components/ui/Icons";
 import { formatDateTime } from "@/lib/date";
 import { cn, formatLocation, formatPrice } from "@/lib/utils";
 import type { ReservationView } from "@/types/reservation";
+import { AdvanceBadge } from "./AdvanceBadge";
 import { StatusBadge } from "./StatusBadge";
 import { panel } from "./States";
 
@@ -25,7 +26,10 @@ export function ReservationCard({ reservation: r }: { reservation: ReservationVi
               </p>
               {r.bookingReference ? <p className="mt-0.5 font-mono text-xs text-muted">{r.bookingReference}</p> : null}
             </div>
-            <StatusBadge status={r.status} />
+            <div className="flex flex-wrap items-center gap-2">
+              <AdvanceBadge bookingType={r.bookingType} />
+              <StatusBadge status={r.status} />
+            </div>
           </div>
 
           <dl className="mt-4 grid gap-x-6 gap-y-3 text-sm sm:grid-cols-2">

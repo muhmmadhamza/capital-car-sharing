@@ -9,6 +9,9 @@
  */
 export type WallClock = string;
 
+/** Decided by the server: "advance" when the pickup is at least the minimum lead time after booking. */
+export type BookingType = "standard" | "advance";
+
 /** "YYYY-MM-DD" */
 export type DateKey = string;
 /** "HH:mm" */

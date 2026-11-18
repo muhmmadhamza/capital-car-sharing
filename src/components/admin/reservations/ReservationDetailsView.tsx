@@ -4,6 +4,7 @@ import Link from "next/link";
 import { CarImageView } from "@/components/cars/CarImageView";
 import { Button } from "@/components/ui/Button";
 import { CarIcon, UserIcon } from "@/components/ui/Icons";
+import { AdvanceBadge } from "@/components/customer/AdvanceBadge";
 import { RESERVATION_LABELS, reservationTone } from "@/features/admin/status";
 import { carLabel, formatIsoDateTime } from "@/features/admin/format";
 import { useAsync } from "@/hooks/useAsync";
@@ -132,6 +133,7 @@ export function ReservationDetailsView({ id }: { id: string }) {
               <Meta label="Booking reference" value={<span className="font-mono text-sm font-semibold">{r.bookingReference ?? "—"}</span>} />
               <Meta label="Reservation ID" value={<span className="font-mono text-sm">{r.id}</span>} />
               <Meta label="Status" value={<StatusPill tone={reservationTone(r.status)}>{RESERVATION_LABELS[r.status]}</StatusPill>} />
+              <Meta label="Booking type" value={r.bookingType === "advance" ? <AdvanceBadge bookingType="advance" /> : "Standard"} />
               <Meta label="Booked on" value={formatIsoDateTime(r.createdAt)} />
               {r.statusReason ? <Meta label="Reason" value={r.statusReason} /> : null}
             </dl>

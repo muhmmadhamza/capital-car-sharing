@@ -46,7 +46,7 @@ export const apiCarsRepository: CarsRepository = {
     return locationsFromCars(await guard(() => searchAll({})));
   },
 
-  async findCars({ location, filters }) {
+  async findCars({ location, filters, advance }) {
     // Send what the API can filter on unambiguously, then apply every filter again here
     // so a different matching rule on the server can never show a car that does not fit.
     const params: CarSearchFilters = {
@@ -57,6 +57,8 @@ export const apiCarsRepository: CarsRepository = {
       carType: filters.bodyTypes.length === 1 ? bodyTypeToApi(filters.bodyTypes[0]) : undefined,
       fuelType: filters.fuels.length === 1 ? filters.fuels[0] : undefined,
       sort: "newest",
+      // Advance search: the API validates the dates and leaves out cars that are booked or blocked for them.
+      ...(advance ? { bookingType: "advance" as const, pickupDate: advance.pickupDate, returnDate: advance.returnDate } : {}),
     };
     const cars = await guard(() => searchAll(params));
     return cars.map(mapCar).filter((c) => matches(c, filters));

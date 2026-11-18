@@ -9,6 +9,7 @@ import type { CarFilters } from "@/types/search";
  *
  * Implemented by ./api-repository.ts on top of src/services/api/cars.service.ts:
  *   GET /cars?location=&carType=&minPrice=&maxPrice=&transmission=&fuelType=&sort=&page=&limit=
+ *   GET /cars?bookingType=advance&pickupDate=&returnDate=   (advance search: only cars free for those dates)
  *   GET /cars/:id
  *   GET /cars/:id/availability?startDate=&endDate=
  *
@@ -19,7 +20,7 @@ export interface CarsRepository {
   /** Pickup places that currently have cars. */
   listLocations(): Promise<Location[]>;
   /** Cars matching the filters. `location` is a free-text query. */
-  findCars(query: { location: string; filters: CarFilters }): Promise<Car[]>;
+  findCars(query: { location: string; filters: CarFilters; advance?: { pickupDate: string; returnDate: string } }): Promise<Car[]>;
   /** The newest cars, for the landing page. */
   getFeaturedCars(limit: number): Promise<Car[]>;
   getCarBySlug(slug: string): Promise<Car | null>;

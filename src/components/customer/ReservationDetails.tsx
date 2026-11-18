@@ -15,6 +15,7 @@ import { cancelReservation } from "@/services/reservations";
 import { errorMessage } from "@/services/errors";
 import { StatusHistory } from "@/components/ui/StatusHistory";
 import { PriceBreakdown } from "./PriceBreakdown";
+import { AdvanceBadge } from "./AdvanceBadge";
 import { StatusBadge } from "./StatusBadge";
 import { EmptyBlock, ErrorBlock, LoadingBlock, Skeleton, panel } from "./States";
 
@@ -100,7 +101,10 @@ export function ReservationDetails({ id }: { id: string }) {
           </p>
           <h1 className="text-2xl font-semibold tracking-tight text-navy-900 sm:text-3xl">{name}</h1>
         </div>
-        <StatusBadge status={r.status} className="self-start" />
+        <div className="flex flex-wrap items-center gap-2 self-start">
+          <AdvanceBadge bookingType={r.bookingType} />
+          <StatusBadge status={r.status} />
+        </div>
       </div>
 
       <div className="grid gap-5 xl:grid-cols-[1fr_20rem]">

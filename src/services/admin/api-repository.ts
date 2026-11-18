@@ -93,6 +93,7 @@ function toReservation(r: ApiReservation): AdminReservation {
     pickupDate: toWallClock(r.pickupTime ? `${r.pickupDate.slice(0, 10)}T${r.pickupTime}` : r.pickupDate),
     returnDate: toWallClock(r.returnTime ? `${r.returnDate.slice(0, 10)}T${r.returnTime}` : r.returnDate),
     status: r.status,
+    bookingType: r.bookingType ?? "standard",
     dailyPrice: r.dailyPrice,
     totalPrice: r.totalPrice,
     createdAt: r.createdAt,
@@ -288,6 +289,8 @@ export const apiAdminDashboard: AdminDashboardRepository = {
         completedReservations: reservations.filter((r) => r.status === "completed").length,
         cancelledReservations: reservations.filter((r) => r.status === "cancelled").length,
         rejectedReservations: reservations.filter((r) => r.status === "rejected").length,
+        advanceReservations: reservations.filter((r) => r.bookingType === "advance").length,
+        upcomingAdvanceReservations: reservations.filter((r) => r.bookingType === "advance" && (r.status === "pending" || r.status === "confirmed") && toReservation(r).pickupDate > nowWall()).length,
       },
       attention: {
         pendingPartners: partners.filter((p) => p.status === "pending").length,

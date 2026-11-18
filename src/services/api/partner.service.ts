@@ -1,16 +1,22 @@
 import { api } from '@/lib/api-client';
 import type { ApiMeta } from '@/lib/api-client';
-import type { Car, CarAvailability, CarInput, PartnerProfile, Reservation, ReservationStatus } from '@/types/api';
+import type { BookingType, Car, CarAvailability, CarInput, PartnerProfile, Reservation, ReservationStatus } from '@/types/api';
+
+/** Counts for the partner dashboard. The advance fields are missing when the API predates advance reservations. */
+interface ReservationStats {
+  total: number; pending: number; confirmed: number; completed: number; cancelled: number; rejected: number; upcoming: number;
+  advance?: number; advancePending?: number; upcomingAdvance?: number; advanceNext7Days?: number;
+}
 
 export const partnerService = {
   /** Bookings on the partner's own cars. The server scopes this to the signed-in partner. */
-  async listReservations(params: { status?: ReservationStatus; carId?: string; search?: string; limit?: number } = {}): Promise<{ reservations: Reservation[]; meta?: ApiMeta }> {
+  async listReservations(params: { status?: ReservationStatus; carId?: string; search?: string; limit?: number; bookingType?: BookingType } = {}): Promise<{ reservations: Reservation[]; meta?: ApiMeta }> {
     const { data, meta } = await api.get<{ reservations: Reservation[] }>('/partners/me/reservations', params);
     return { reservations: data.reservations, meta };
   },
 
-  async getReservationStats(): Promise<{ total: number; pending: number; confirmed: number; completed: number; cancelled: number; rejected: number; upcoming: number }> {
-    const { data } = await api.get<{ stats: { total: number; pending: number; confirmed: number; completed: number; cancelled: number; rejected: number; upcoming: number } }>('/partners/me/reservations/stats');
+  async getReservationStats(): Promise<ReservationStats> {
+    const { data } = await api.get<{ stats: ReservationStats }>('/partners/me/reservations/stats');
     return data.stats;
   },
 

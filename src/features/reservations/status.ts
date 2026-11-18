@@ -29,9 +29,12 @@ export const isHolding = (s: ReservationStatus) => s === "pending" || s === "con
 export const canCancel = (r: Pick<ReservationView, "status" | "canCancel">) =>
   r.canCancel ?? isHolding(r.status);
 
-export function summarize(reservations: Pick<ReservationView, "status">[]): ReservationSummary {
-  const summary: ReservationSummary = { total: reservations.length, pending: 0, confirmed: 0, completed: 0, cancelled: 0, rejected: 0 };
-  for (const r of reservations) summary[r.status] += 1;
+export function summarize(reservations: Pick<ReservationView, "status" | "bookingType">[]): ReservationSummary {
+  const summary: ReservationSummary = { total: reservations.length, pending: 0, confirmed: 0, completed: 0, cancelled: 0, rejected: 0, advance: 0 };
+  for (const r of reservations) {
+    summary[r.status] += 1;
+    if (r.bookingType === "advance") summary.advance += 1;
+  }
   return summary;
 }
 

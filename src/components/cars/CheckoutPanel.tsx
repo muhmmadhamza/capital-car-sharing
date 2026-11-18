@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { ReserveAuthPrompt } from "@/components/auth/ReserveAuthPrompt";
+import { AdvanceBadge } from "@/components/customer/AdvanceBadge";
 import { PriceBreakdown } from "@/components/customer/PriceBreakdown";
 import { Button } from "@/components/ui/Button";
 import { AlertIcon, CalendarIcon, CheckIcon, PinIcon, ShieldIcon } from "@/components/ui/Icons";
@@ -158,6 +159,14 @@ function MemberCheckout(p: Props) {
       <p className="flex items-center gap-2 font-semibold text-[#14543A]">
         <CheckIcon width={18} height={18} /> These dates are available.
       </p>
+      {quote.bookingType === "advance" ? (
+        <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-navy-700">
+          <AdvanceBadge bookingType="advance" />
+          {quote.leadHours !== undefined && quote.leadHours >= 48
+            ? `Advance reservation: pickup is about ${Math.floor(quote.leadHours / 24)} days away. The car is held for you once you send the request.`
+            : "Advance reservation: the car is held for you once you send the request."}
+        </p>
+      ) : null}
       <div className="mt-4">
         <Summary car={car} p={p} />
       </div>

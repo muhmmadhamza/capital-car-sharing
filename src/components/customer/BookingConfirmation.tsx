@@ -7,6 +7,7 @@ import { CalendarIcon, CheckIcon, PinIcon } from "@/components/ui/Icons";
 import { useReservation } from "@/hooks/useReservations";
 import { formatDateTime } from "@/lib/date";
 import { cn, formatLocation } from "@/lib/utils";
+import { AdvanceBadge } from "./AdvanceBadge";
 import { PriceBreakdown } from "./PriceBreakdown";
 import { EmptyBlock, ErrorBlock, LoadingBlock, panel } from "./States";
 
@@ -48,6 +49,7 @@ export function BookingConfirmation({ id }: { id: string }) {
           <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-navy-900 text-gold-500">
             <CheckIcon width={24} height={24} />
           </span>
+          {r.bookingType === "advance" ? <AdvanceBadge bookingType="advance" className="mt-4" /> : null}
           <h1 className="mt-4 text-2xl font-semibold tracking-tight text-navy-900 sm:text-3xl">
             {r.status === "confirmed" ? "Reservation confirmed" : r.status === "pending" ? "Request sent" : "Reservation received"}
           </h1>
@@ -56,6 +58,9 @@ export function BookingConfirmation({ id }: { id: string }) {
               ? `Your request for the ${name} is waiting for the car owner to approve it. The dates are held for you meanwhile. Keep your booking reference handy.`
               : `Your ${name} booking is ${r.status}. Keep your booking reference handy.`}
           </p>
+          {r.bookingType === "advance" ? (
+            <p className="mt-2 text-sm text-muted">This is an advance reservation: the car stays held for these dates, and you can follow it under My Reservations.</p>
+          ) : null}
 
           <div className="mx-auto mt-6 max-w-sm rounded-xl border border-gold-700/40 bg-gold-500/10 px-4 py-3">
             <p className="text-xs font-medium uppercase tracking-wide text-muted">Booking reference</p>

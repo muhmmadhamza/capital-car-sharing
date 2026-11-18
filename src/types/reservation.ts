@@ -1,4 +1,4 @@
-import type { WallClock } from "./booking";
+import type { BookingType, WallClock } from "./booking";
 import type { Car, Location } from "./car";
 
 /** Booking workflow: pending (awaiting the partner) -> confirmed -> completed; or rejected / cancelled. */
@@ -14,6 +14,8 @@ export interface Reservation {
   pickupDate: WallClock;
   returnDate: WallClock;
   status: ReservationStatus;
+  /** "advance" when booked at least the minimum lead time ahead. Reservations from before this existed are "standard". */
+  bookingType: BookingType;
   /** Price per day at the time of booking. Later price changes never alter it. */
   dailyPrice: number;
   /** dailyPrice × billable days. The refundable deposit is not included. */
@@ -67,4 +69,6 @@ export interface ReservationSummary {
   completed: number;
   cancelled: number;
   rejected: number;
+  /** Advance reservations, whatever their status. */
+  advance: number;
 }

@@ -86,6 +86,7 @@ export function DashboardView() {
             <StatCard label="Booked Cars" value={data.stats.bookedCars} icon={CarIcon} hint="Out on a rental right now" />
             <StatCard label="Total Reservations" value={data.stats.totalReservations} icon={ListIcon} />
             <StatCard label="Pending Reservations" value={data.stats.pendingReservations} icon={CalendarIcon} href="/admin/reservations?status=pending" hint="Waiting for a partner's decision" />
+            <StatCard label="Advance Reservations" value={data.stats.advanceReservations} icon={CalendarIcon} href="/admin/reservations?type=advance" hint={`${data.stats.upcomingAdvanceReservations} still ahead`} />
             <StatCard label="Confirmed Reservations" value={data.stats.confirmedReservations} icon={CheckIcon} href="/admin/reservations?status=confirmed" />
             <StatCard label="Completed Reservations" value={data.stats.completedReservations} icon={CheckIcon} href="/admin/reservations?status=completed" />
             <StatCard label="Cancelled / Rejected" value={data.stats.cancelledReservations + data.stats.rejectedReservations} icon={ListIcon} hint={`${data.stats.cancelledReservations} cancelled · ${data.stats.rejectedReservations} rejected`} />

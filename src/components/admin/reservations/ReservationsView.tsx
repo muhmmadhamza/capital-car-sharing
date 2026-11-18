@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
+import { AdvanceBadge } from "@/components/customer/AdvanceBadge";
 import { CalendarIcon, ClockIcon, XCircleIcon } from "@/components/ui/Icons";
 import { NO_RESERVATION_FILTERS, PAGE_SIZE, filterReservations, reservationFiltersActive, type ReservationFilters } from "@/features/admin/filters";
 import { RESERVATION_LABELS, reservationTone } from "@/features/admin/status";
 import { useAsync } from "@/hooks/useAsync";
-import { formatDateTime, rentalDays } from "@/lib/date";
+import { formatDateTime, nowWall, rentalDays } from "@/lib/date";
 import { formatPrice } from "@/lib/utils";
 import { getReservations } from "@/services/admin/reservation.service";
 import type { AdminReservationView } from "@/types/admin";
@@ -18,6 +19,7 @@ import { EmptyState, ErrorState, LoadingRows, Meta, PageHeader, Pagination, RowA
 
 const STATUSES: ReservationStatus[] = ["pending", "confirmed", "completed", "cancelled", "rejected"];
 const isStatus = (v: string | null): v is ReservationStatus => STATUSES.some((s) => s === v);
+const TYPE_OPTIONS: FilterOption[] = [{ value: "advance", label: "Advance" }, { value: "standard", label: "Standard" }];
 
 const th = "whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-navy-700";
 const td = "px-4 py-3.5 align-middle text-sm text-navy-900";
@@ -36,9 +38,10 @@ function optionsFrom(rows: AdminReservationView[], value: (r: AdminReservationVi
 export function ReservationsView() {
   const params = useSearchParams();
   const initialStatus = params.get("status");
+  const initialType = params.get("type") === "advance" ? "advance" : "all";
   const { data, loading, error, reload } = useAsync(getReservations, []);
 
-  const [filters, setFilters] = useState<ReservationFilters>({ ...NO_RESERVATION_FILTERS, status: isStatus(initialStatus) ? initialStatus : "all" });
+  const [filters, setFilters] = useState<ReservationFilters>({ ...NO_RESERVATION_FILTERS, status: isStatus(initialStatus) ? initialStatus : "all", bookingType: initialType });
   const [page, setPage] = useState(1);
 
   const rows = useMemo(() => data ?? [], [data]);
@@ -49,6 +52,8 @@ export function ReservationsView() {
   const filtering = reservationFiltersActive(filters);
 
   const count = (s: ReservationStatus) => rows.filter((r) => r.status === s).length;
+  // Advance reservations still ahead: pending or confirmed with the pickup not yet passed.
+  const upcomingAdvance = rows.filter((r) => r.bookingType === "advance" && (r.status === "pending" || r.status === "confirmed") && r.pickupDate > nowWall()).length;
   const customerOptions = useMemo(() => optionsFrom(rows, (r) => r.customerId, (r) => r.customerName), [rows]);
   const partnerOptions = useMemo(() => optionsFrom(rows, (r) => r.partnerId, (r) => r.partnerName), [rows]);
   const carOptions = useMemo(() => optionsFrom(rows, (r) => r.carId, (r) => r.carName), [rows]);
@@ -68,7 +73,8 @@ export function ReservationsView() {
       <PageHeader title="Reservations" description="Every booking across customers and partners. Open one to see who rented what, and when." />
 
       {data ? (
-        <section aria-label="Reservation summary" className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-5">
+        <section aria-label="Reservation summary" className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-6">
+          <StatCard label="Advance ahead" value={upcomingAdvance} icon={ClockIcon} />
           <StatCard label="Pending" value={count("pending")} icon={ClockIcon} />
           <StatCard label="Confirmed" value={count("confirmed")} icon={CalendarIcon} />
           <StatCard label="Completed" value={count("completed")} icon={CheckCircleIcon} />
@@ -83,6 +89,7 @@ export function ReservationsView() {
             <SearchInput value={filters.query} placeholder="Booking reference, customer, car or partner" onChange={(v) => set("query", v)} />
           </div>
           <FilterSelect label="Status" value={filters.status} allLabel="All statuses" options={statusOptions} onChange={(v) => set("status", v as ReservationFilters["status"])} />
+          <FilterSelect label="Booking type" value={filters.bookingType} allLabel="All types" options={TYPE_OPTIONS} onChange={(v) => set("bookingType", v as ReservationFilters["bookingType"])} />
           <FilterSelect label="Customer" value={filters.customerId} allLabel="All customers" options={customerOptions} onChange={(v) => set("customerId", v)} />
           <FilterSelect label="Partner" value={filters.partnerId} allLabel="All partners" options={partnerOptions} onChange={(v) => set("partnerId", v)} />
           <FilterSelect label="Car" value={filters.carId} allLabel="All cars" options={carOptions} onChange={(v) => set("carId", v)} />
@@ -156,7 +163,12 @@ export function ReservationsView() {
                       <td className={`${td} whitespace-nowrap`}>{durationLabel(r)}</td>
                       <td className={`${td} whitespace-nowrap`}>{formatPrice(r.dailyPrice)}</td>
                       <td className={`${td} whitespace-nowrap font-semibold`}>{formatPrice(r.totalPrice)}</td>
-                      <td className={td}><StatusPill tone={reservationTone(r.status)}>{RESERVATION_LABELS[r.status]}</StatusPill></td>
+                      <td className={td}>
+                        <div className="flex flex-col items-start gap-1.5">
+                          <StatusPill tone={reservationTone(r.status)}>{RESERVATION_LABELS[r.status]}</StatusPill>
+                          <AdvanceBadge bookingType={r.bookingType} />
+                        </div>
+                      </td>
                       <td className={`${td} text-right`}>
                         <div className="flex justify-end">
                           <Link
@@ -183,7 +195,10 @@ export function ReservationsView() {
                       <Link href={`/admin/reservations/${r.id}`} className="block truncate font-semibold text-navy-900 hover:text-gold-700">{r.carName}</Link>
                       <p className="font-mono text-xs text-muted">{r.bookingReference ?? r.id}</p>
                     </div>
-                    <StatusPill tone={reservationTone(r.status)}>{RESERVATION_LABELS[r.status]}</StatusPill>
+                    <div className="flex flex-col items-end gap-1.5">
+                      <StatusPill tone={reservationTone(r.status)}>{RESERVATION_LABELS[r.status]}</StatusPill>
+                      <AdvanceBadge bookingType={r.bookingType} />
+                    </div>
                   </div>
                   <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-sm sm:grid-cols-3">
                     <Meta label="Customer" value={<Link href={`/admin/customers/${r.customerId}`} className="hover:text-gold-700">{r.customerName}</Link>} />

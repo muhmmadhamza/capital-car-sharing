@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { AdvanceBadge } from "@/components/customer/AdvanceBadge";
 import { StatusBadge } from "@/components/customer/StatusBadge";
 import { EmptyBlock, ErrorBlock, LoadingBlock, Skeleton, panel } from "@/components/customer/States";
 import { Button } from "@/components/ui/Button";
@@ -88,7 +89,10 @@ export function PartnerReservationDetails({ id }: { id: string }) {
           </p>
           <h1 className="text-2xl font-semibold tracking-tight text-navy-900 sm:text-3xl">{carName(r.car)}</h1>
         </div>
-        <StatusBadge status={r.status} className="self-start" />
+        <div className="flex flex-wrap items-center gap-2 self-start">
+          <AdvanceBadge bookingType={r.bookingType} />
+          <StatusBadge status={r.status} />
+        </div>
       </div>
 
       <div className="grid gap-5 xl:grid-cols-[1fr_20rem]">

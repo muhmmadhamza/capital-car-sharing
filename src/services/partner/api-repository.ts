@@ -41,6 +41,8 @@ export const apiPartnerDataRepository: PartnerDataRepository = {
       pendingReservations: stats.pending,
       upcomingReservations: stats.upcoming,
       totalReservations: stats.total,
+      upcomingAdvanceReservations: stats.upcomingAdvance,
+      advanceNext7Days: stats.advanceNext7Days,
     };
   },
 

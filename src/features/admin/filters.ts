@@ -1,5 +1,6 @@
 import { dateOf } from "@/lib/date";
 import type { AdminCarListStatus, AdminCarView, AdminCustomerRow, AdminPartnerRow, AdminReservationView, CustomerStatus, PartnerStatus } from "@/types/admin";
+import type { BookingType } from "@/types/booking";
 import type { ReservationStatus } from "@/types/reservation";
 import { carListStatus } from "./status";
 
@@ -59,6 +60,8 @@ export function filterCars(rows: AdminCarView[], f: CarFilters): AdminCarView[] 
 export interface ReservationFilters {
   query: string;
   status: ReservationStatus | "all";
+  /** "all", "advance" or "standard". */
+  bookingType: BookingType | "all";
   /** "all" or a customer id. */
   customerId: string;
   /** "all" or a partner id. */
@@ -71,10 +74,10 @@ export interface ReservationFilters {
   dateTo: string;
 }
 
-export const NO_RESERVATION_FILTERS: ReservationFilters = { query: "", status: "all", customerId: "all", partnerId: "all", carId: "all", dateFrom: "", dateTo: "" };
+export const NO_RESERVATION_FILTERS: ReservationFilters = { query: "", status: "all", bookingType: "all", customerId: "all", partnerId: "all", carId: "all", dateFrom: "", dateTo: "" };
 
 export const reservationFiltersActive = (f: ReservationFilters) =>
-  f.query.trim() !== "" || f.status !== "all" || f.customerId !== "all" || f.partnerId !== "all" || f.carId !== "all" || f.dateFrom !== "" || f.dateTo !== "";
+  f.query.trim() !== "" || f.status !== "all" || f.bookingType !== "all" || f.customerId !== "all" || f.partnerId !== "all" || f.carId !== "all" || f.dateFrom !== "" || f.dateTo !== "";
 
 /**
  * Date filter: a reservation matches when its rental period overlaps the chosen range.
@@ -85,6 +88,7 @@ export function filterReservations(rows: AdminReservationView[], f: ReservationF
   return rows.filter(
     (r) =>
       (f.status === "all" || r.status === f.status) &&
+      (f.bookingType === "all" || r.bookingType === f.bookingType) &&
       (f.customerId === "all" || r.customerId === f.customerId) &&
       (f.partnerId === "all" || r.partnerId === f.partnerId) &&
       (f.carId === "all" || r.carId === f.carId) &&

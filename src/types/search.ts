@@ -20,4 +20,6 @@ export interface CarSearchQuery {
   sort: CarSort;
   /** Hide cars that are not available for the window. */
   availableOnly: boolean;
+  /** Advance search: the API checks the dates qualify and only returns cars that are free for them. Needs `window`. */
+  advance?: boolean;
 }

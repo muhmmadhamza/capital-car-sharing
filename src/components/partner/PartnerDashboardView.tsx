@@ -62,13 +62,16 @@ export function PartnerDashboardView() {
       {stats.error ? (
         <ErrorBlock message={stats.error} onRetry={stats.reload} />
       ) : (
-        <section aria-label="Fleet summary" className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-6">
+        <section aria-label="Fleet summary" className="grid grid-cols-2 gap-4 lg:grid-cols-4 xl:grid-cols-7">
           <StatCard label="Total cars" value={s?.totalCars} tone="bg-navy-900" />
           <StatCard label="Available cars" value={s?.availableCars} tone="bg-[#1E6B45]" />
           <StatCard label="Currently booked" value={s?.bookedCars} tone="bg-navy-700" />
           <StatCard label="Pending requests" value={s?.pendingReservations} tone="bg-gold-500" />
           <StatCard label="Upcoming reservations" value={s?.upcomingReservations} tone="bg-gold-700" />
           <StatCard label="Total reservations" value={s?.totalReservations} tone="bg-navy-900" />
+          {s?.upcomingAdvanceReservations !== undefined ? (
+            <StatCard label="Advance reservations ahead" value={s.upcomingAdvanceReservations} tone="bg-navy-700" />
+          ) : null}
         </section>
       )}
 

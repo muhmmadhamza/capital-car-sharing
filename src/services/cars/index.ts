@@ -1,6 +1,6 @@
 import { getAvailability, validateRental } from "@/features/availability";
 import { RENTAL_RULES } from "@/features/availability/rules";
-import { nowWall } from "@/lib/date";
+import { dateOf, nowWall } from "@/lib/date";
 import type { BookingBlock, RentalValidation, RentalWindow } from "@/types/booking";
 import type { Car, CarDetail, CarListing, Location } from "@/types/car";
 import type { CarSearchQuery } from "@/types/search";
@@ -33,7 +33,8 @@ const locationOf = (car: Car): Location => ({ id: car.locationId, name: car.loca
 /** Cars for the listing page, each with availability for the searched window. */
 export async function searchCars(query: CarSearchQuery): Promise<CarListing[]> {
   const now = nowWall();
-  const cars = await repository.findCars({ location: query.location, filters: query.filters });
+  const advance = query.advance && query.window ? { pickupDate: dateOf(query.window.pickup), returnDate: dateOf(query.window.return) } : undefined;
+  const cars = await repository.findCars({ location: query.location, filters: query.filters, advance });
   const blocks = groupBlocks(
     await repository.getBlocks(
       cars.map((c) => c.id),

@@ -45,6 +45,7 @@ export function mapReservation(r: ApiReservation): ReservationRecord {
     pickupDate: toWallClock(r.pickupTime ? `${r.pickupDate.slice(0, 10)}T${r.pickupTime}` : r.pickupDate),
     returnDate: toWallClock(r.returnTime ? `${r.returnDate.slice(0, 10)}T${r.returnTime}` : r.returnDate),
     status: r.status,
+    bookingType: r.bookingType ?? "standard",
     dailyPrice: r.dailyPrice,
     totalPrice: r.totalPrice,
     bookingReference: r.bookingReference,

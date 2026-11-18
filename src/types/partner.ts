@@ -1,4 +1,4 @@
-import type { DateKey, WallClock } from "./booking";
+import type { BookingType, DateKey, WallClock } from "./booking";
 import type { CarBodyType, CarImage, FuelType, Transmission } from "./car";
 import type { ReservationStatus, StatusHistoryEntry } from "./reservation";
 
@@ -122,6 +122,8 @@ export interface PartnerReservation {
   pickupDate: WallClock;
   returnDate: WallClock;
   status: ReservationStatus;
+  /** "advance" when booked at least the minimum lead time ahead of pickup. */
+  bookingType: BookingType;
   /** Price per day at the time of booking. */
   dailyPrice: number;
   /** dailyPrice × billable days. */
@@ -161,6 +163,8 @@ export interface PartnerReservationFilters {
   carId?: string;
   /** Booking reference, customer name or email, car make or model. */
   search?: string;
+  /** The API applies it. */
+  bookingType?: BookingType;
 }
 
 export interface PartnerStats {
@@ -173,4 +177,8 @@ export interface PartnerStats {
   /** Confirmed bookings that have not ended yet. */
   upcomingReservations: number;
   totalReservations: number;
+  /** Advance reservations still ahead (pending or confirmed, pickup not passed). Undefined on an older API. */
+  upcomingAdvanceReservations?: number;
+  /** Of those, how many have a pickup within the next 7 days. */
+  advanceNext7Days?: number;
 }

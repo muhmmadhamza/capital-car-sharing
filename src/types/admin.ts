@@ -1,4 +1,4 @@
-import type { WallClock } from "./booking";
+import type { BookingType, WallClock } from "./booking";
 import type { CarBodyType } from "./car";
 import type { ReservationStatus, StatusHistoryEntry } from "./reservation";
 
@@ -137,6 +137,8 @@ export interface AdminReservation {
   returnDate: WallClock;
   /** Same lifecycle as the customer and partner areas. */
   status: ReservationStatus;
+  /** "advance" when booked at least the minimum lead time ahead of pickup. */
+  bookingType: BookingType;
   /** Price per day at the time of booking. Later price changes never alter it. */
   dailyPrice: number;
   totalPrice: number;
@@ -233,6 +235,10 @@ export interface AdminStats {
   completedReservations: number;
   cancelledReservations: number;
   rejectedReservations: number;
+  /** Advance reservations, whatever their status. */
+  advanceReservations: number;
+  /** Advance reservations still ahead: pending or confirmed, pickup not passed. */
+  upcomingAdvanceReservations: number;
 }
 
 /** Counts that need an admin's attention. */
